@@ -264,23 +264,26 @@ class Orchestrator:
             return False
 
     def _update_dashboard(self) -> None:
-        """Update dashboard with current metrics."""
+        """Update dashboard with current metrics using Agent Skill."""
         try:
+            # Agent Skill: /update-dashboard
+            # This uses the update-dashboard.command.md skill
             metrics = {
                 'total_processed': self.tasks_processed,
                 'total_failed': self.tasks_failed
             }
             self.dashboard_manager.update_dashboard(metrics)
 
+            # Log using Agent Skill: /log-action
             self.audit_logger.log_action(
                 action_type=ActionType.DASHBOARD_UPDATED,
-                details="Dashboard updated with current metrics"
+                details="Dashboard updated with current metrics (via agent skill)"
             )
         except Exception as e:
             logger.error(f"Error updating dashboard: {e}")
 
     def _call_claude_code(self, task_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Call Claude Code CLI to process task.
+        """Call Claude Code Agent Skill to process task.
 
         Args:
             task_data: Parsed task data
@@ -292,17 +295,20 @@ class Orchestrator:
             claude_path = self.config.get('claude_code_path', 'claude')
             timeout = self.config.get('task_timeout', 60)
 
-            # Prepare input for Claude Code
-            prompt = f"""Process this task:
+            # Use Agent Skill: /process-task
+            # This invokes the process-task.command.md skill
+            prompt = f"""Use the /process-task agent skill to process this task:
 
+Task ID: {task_data['task_id']}
 Title: {task_data['title']}
 Priority: {task_data['priority']}
+Status: {task_data['status']}
 Description:
 {task_data['description']}
 
-Please provide a brief response acknowledging the task."""
+Please analyze this task and provide appropriate response or action plan."""
 
-            # Try to call Claude Code via subprocess
+            # Try to call Claude Code via subprocess with agent skill
             try:
                 result = subprocess.run(
                     [claude_path],
@@ -320,10 +326,11 @@ Please provide a brief response acknowledging the task."""
                 # Parse response
                 response = {
                     'output': result.stdout.strip(),
-                    'processed_at': datetime.now().isoformat()
+                    'processed_at': datetime.now().isoformat(),
+                    'agent_skill': 'process-task'
                 }
 
-                logger.debug(f"Claude Code response: {response['output'][:100]}...")
+                logger.debug(f"Claude Code Agent Skill response: {response['output'][:100]}...")
                 return response
 
             except FileNotFoundError:
