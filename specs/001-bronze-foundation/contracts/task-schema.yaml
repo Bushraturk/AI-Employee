@@ -1,0 +1,427 @@
+# Task File Schema
+
+**Version**: 1.0.0
+**Feature**: Bronze Phase - Local Foundation
+**Date**: 2026-02-14
+
+## Overview
+
+This schema defines the structure and validation rules for task files in the AI Employee system. Task files are Markdown documents with YAML frontmatter that represent work items to be processed.
+
+---
+
+## File Format
+
+### Structure
+
+```
+---
+[YAML Frontmatter]
+---
+
+[Markdown Body]
+```
+
+### Example
+
+```markdown
+---
+task_id: 550e8400-e29b-41d4-a716-446655440000
+title: Review Q1 financial report
+priority: P1
+status: inbox
+created_at: 2026-02-14T10:30:00Z
+tags: [finance, quarterly, review]
+---
+
+# Task: Review Q1 Financial Report
+
+Please review the Q1 2026 financial report and provide:
+- Summary of key metrics
+- Comparison to Q4 2025
+- Recommendations for Q2
+
+Report location: Company_Handbook/Finance/Q1-2026-Report.pdf
+```
+
+---
+
+## YAML Frontmatter Schema
+
+### Required Fields
+
+#### task_id
+- **Type**: string (UUID v4)
+- **Required**: Yes
+- **Format**: `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx` (UUID v4)
+- **Example**: `550e8400-e29b-41d4-a716-446655440000`
+- **Validation**: Must be valid UUID v4 format
+- **Generation**: Auto-generated if missing (with warning logged)
+
+#### title
+- **Type**: string
+- **Required**: Yes
+- **Min Length**: 1
+- **Max Length**: 200
+- **Format**: Single line, no newlines
+- **Example**: `Review Q1 financial report`
+- **Validation**: Non-empty, max 200 chars, no line breaks
+
+#### status
+- **Type**: enum
+- **Required**: Yes
+- **Allowed Values**: `inbox`, `needs_action`, `done`
+- **Example**: `inbox`
+- **Validation**: Must match current folder location
+- **Default**: Inferred from folder location if missing
+
+#### created_at
+- **Type**: datetime (ISO 8601)
+- **Required**: Yes
+- **Format**: `YYYY-MM-DDTHH:MM:SSZ`
+- **Example**: `2026-02-14T10:30:00Z`
+- **Validation**: Valid ISO 8601, not in future
+- **Timezone**: UTC (Z suffix required)
+
+### Optional Fields
+
+#### priority
+- **Type**: enum
+- **Required**: No
+- **Allowed Values**: `P1`, `P2`, `P3`
+- **Default**: `P2`
+- **Example**: `P1`
+- **Description**: Task priority (P1=highest, P3=lowest)
+
+#### processed_at
+- **Type**: datetime (ISO 8601)
+- **Required**: No
+- **Format**: `YYYY-MM-DDTHH:MM:SSZ`
+- **Example**: `2026-02-14T10:45:30Z`
+- **Validation**: Valid ISO 8601, must be after created_at
+- **Set By**: System when task moves to Done
+
+#### tags
+- **Type**: array of strings
+- **Required**: No
+- **Max Items**: 10
+- **Item Format**: Lowercase, alphanumeric + hyphens
+- **Example**: `[finance, quarterly, review]`
+- **Validation**: Each tag max 50 chars, no spaces
+
+#### assigned_to
+- **Type**: string
+- **Required**: No
+- **Example**: `user@example.com`
+- **Note**: Not used in Bronze phase (reserved for Silver)
+
+---
+
+## Markdown Body Schema
+
+### Structure
+
+The Markdown body contains the full task description and can include:
+- Headings (H1-H6)
+- Lists (ordered, unordered)
+- Code blocks
+- Links
+- Emphasis (bold, italic)
+- Blockquotes
+
+### Requirements
+
+- **Min Length**: 1 character (non-empty)
+- **Max Length**: 10,000 characters (reasonable limit)
+- **Format**: Valid Markdown
+- **Encoding**: UTF-8
+
+### Example
+
+```markdown
+# Task: Review Q1 Financial Report
+
+## Context
+Q1 2026 has concluded and the finance team has prepared the quarterly report.
+
+## Requirements
+Please review the report and provide:
+1. Summary of key metrics
+2. Comparison to Q4 2025
+3. Recommendations for Q2
+
+## Resources
+- Report location: `Company_Handbook/Finance/Q1-2026-Report.pdf`
+- Previous quarter: `Company_Handbook/Finance/Q4-2025-Report.pdf`
+
+## Deadline
+End of week (2026-02-18)
+```
+
+---
+
+## Validation Rules
+
+### File-Level Validation
+
+1. **File Extension**: Must be `.md`
+2. **File Name**: Must match pattern `[a-z0-9-]+\.md`
+3. **File Size**: Max 1 MB
+4. **Encoding**: Must be UTF-8
+5. **Frontmatter Delimiters**: Must have `---` on separate lines
+
+### Field-Level Validation
+
+#### task_id Validation
+
+```python
+import uuid
+
+def validate_task_id(task_id: str) -> bool:
+    try:
+        uuid_obj = uuid.UUID(task_id, version=4)
+        return str(uuid_obj) == task_id
+    except ValueError:
+        return False
+```
+
+#### title Validation
+
+```python
+def validate_title(title: str) -> bool:
+    return (
+        len(title) > 0 and
+        len(title) <= 200 and
+        '\n' not in title and
+        '\r' not in title
+    )
+```
+
+#### status Validation
+
+```python
+def validate_status(status: str, file_path: Path) -> bool:
+    folder_name = file_path.parent.name
+    status_folder_map = {
+        'inbox': 'Inbox',
+        'needs_action': 'Needs_Action',
+        'done': 'Done'
+    }
+    return folder_name == status_folder_map.get(status)
+```
+
+#### created_at Validation
+
+```python
+from datetime import datetime, timezone
+
+def validate_created_at(created_at: str) -> bool:
+    try:
+        dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        now = datetime.now(timezone.utc)
+        return dt <= now  # Not in future
+    except ValueError:
+        return False
+```
+
+#### tags Validation
+
+```python
+import re
+
+def validate_tags(tags: list) -> bool:
+    if len(tags) > 10:
+        return False
+
+    tag_pattern = re.compile(r'^[a-z0-9-]{1,50}$')
+    return all(tag_pattern.match(tag) for tag in tags)
+```
+
+---
+
+## Error Handling
+
+### Missing Required Fields
+
+**Behavior**: Log error and skip task
+
+**Example Error**:
+```
+ERROR: Task file missing required field 'title': Inbox/task-001.md
+```
+
+### Invalid Field Values
+
+**Behavior**: Log warning and use default (if available) or skip task
+
+**Example Warning**:
+```
+WARNING: Invalid priority 'P4' in task-001.md, using default 'P2'
+```
+
+### Malformed YAML
+
+**Behavior**: Log error and skip task
+
+**Example Error**:
+```
+ERROR: Invalid YAML frontmatter in task-001.md: mapping values are not allowed here
+```
+
+### Empty Body
+
+**Behavior**: Log warning and process with placeholder
+
+**Example Warning**:
+```
+WARNING: Empty task description in task-001.md, using placeholder
+```
+
+---
+
+## File Naming Conventions
+
+### Recommended Format
+
+`{category}-{number}.md`
+
+**Examples**:
+- `task-001.md`
+- `review-financial-report.md`
+- `email-draft-client-response.md`
+
+### Constraints
+
+- Lowercase only
+- Alphanumeric + hyphens
+- No spaces (use hyphens)
+- Max 100 characters
+- Must end with `.md`
+
+### Pattern
+
+```regex
+^[a-z0-9-]{1,96}\.md$
+```
+
+---
+
+## Status Transitions
+
+### Valid Transitions
+
+```
+inbox → needs_action → done
+```
+
+### Folder Mapping
+
+| Status | Folder | Description |
+|--------|--------|-------------|
+| `inbox` | `Inbox/` | New tasks awaiting processing |
+| `needs_action` | `Needs_Action/` | Tasks currently being processed |
+| `done` | `Done/` | Completed tasks |
+
+### Transition Rules
+
+1. Tasks start in `inbox` status
+2. System moves to `needs_action` when detected
+3. System moves to `done` after processing
+4. Manual moves are allowed but logged
+5. Status field must match folder location
+
+---
+
+## Examples
+
+### Minimal Valid Task
+
+```markdown
+---
+task_id: 550e8400-e29b-41d4-a716-446655440000
+title: Simple task
+status: inbox
+created_at: 2026-02-14T10:30:00Z
+---
+
+Do something simple.
+```
+
+### Complete Task
+
+```markdown
+---
+task_id: 550e8400-e29b-41d4-a716-446655440000
+title: Review Q1 financial report and provide recommendations
+priority: P1
+status: inbox
+created_at: 2026-02-14T10:30:00Z
+tags: [finance, quarterly, review, urgent]
+---
+
+# Task: Review Q1 Financial Report
+
+## Context
+Q1 2026 has concluded and the finance team has prepared the quarterly report.
+
+## Requirements
+Please review the report and provide:
+1. Summary of key metrics (revenue, expenses, profit)
+2. Comparison to Q4 2025 (percentage changes)
+3. Recommendations for Q2 strategy
+
+## Resources
+- Report location: `Company_Handbook/Finance/Q1-2026-Report.pdf`
+- Previous quarter: `Company_Handbook/Finance/Q4-2025-Report.pdf`
+- Budget plan: `Company_Handbook/Finance/2026-Budget.xlsx`
+
+## Deadline
+End of week (2026-02-18)
+
+## Expected Output
+- Executive summary (1 page)
+- Detailed analysis (3-5 pages)
+- Action items for Q2
+```
+
+### Task with Processing Result
+
+```markdown
+---
+task_id: 550e8400-e29b-41d4-a716-446655440000
+title: Review Q1 financial report
+priority: P1
+status: done
+created_at: 2026-02-14T10:30:00Z
+processed_at: 2026-02-14T10:45:30Z
+tags: [finance, quarterly, review]
+---
+
+# Task: Review Q1 Financial Report
+
+[Original task description...]
+
+---
+
+## Processing Result
+
+**Processed by**: Claude Code
+**Completed at**: 2026-02-14T10:45:30Z
+**Duration**: 15 minutes
+
+### Summary
+Q1 2026 showed strong performance with 15% revenue growth compared to Q4 2025...
+
+[Full analysis...]
+```
+
+---
+
+## Version History
+
+### 1.0.0 (2026-02-14)
+- Initial schema definition
+- Required fields: task_id, title, status, created_at
+- Optional fields: priority, processed_at, tags, assigned_to
+- Validation rules defined
+- Examples provided
