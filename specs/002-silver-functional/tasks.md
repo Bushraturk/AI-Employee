@@ -24,15 +24,15 @@
 
 **Purpose**: Project initialization and dependency installation
 
-- [ ] T001 Update requirements.txt with Silver Tier dependencies (google-auth-oauthlib, google-api-python-client, requests-oauthlib, oauthlib, playwright, keyring, cryptography, APScheduler, pytz)
-- [ ] T002 Install Python dependencies via pip install -r requirements.txt
-- [ ] T003 [P] Install Playwright browsers via playwright install chromium
-- [ ] T004 [P] Create vault/Needs_Approval/ folder for approval queue
-- [ ] T005 [P] Create vault/Plans/ folder for Plan.md files
-- [ ] T006 [P] Create vault/LinkedIn_Posts/ folder for post history
-- [ ] T007 [P] Create credentials/ folder (outside vault) for OAuth2 credentials
-- [ ] T008 [P] Update .gitignore to exclude credentials/, whatsapp_session/, and token storage files
-- [ ] T009 Create .env.example with Silver Tier configuration variables (watcher settings, approval timeout, scheduler timezone)
+- [x] T001 Update requirements.txt with Silver Tier dependencies (google-auth-oauthlib, google-api-python-client, requests-oauthlib, oauthlib, playwright, keyring, cryptography, APScheduler, pytz)
+- [x] T002 Install Python dependencies via pip install -r requirements.txt
+- [x] T003 [P] Install Playwright browsers via playwright install chromium
+- [x] T004 [P] Create vault/Needs_Approval/ folder for approval queue
+- [x] T005 [P] Create vault/Plans/ folder for Plan.md files
+- [x] T006 [P] Create vault/LinkedIn_Posts/ folder for post history
+- [x] T007 [P] Create credentials/ folder (outside vault) for OAuth2 credentials
+- [x] T008 [P] Update .gitignore to exclude credentials/, whatsapp_session/, and token storage files
+- [x] T009 Create .env.example with Silver Tier configuration variables (watcher settings, approval timeout, scheduler timezone)
 
 ---
 
@@ -42,18 +42,18 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T010 Create src/watchers/auth/ directory for authentication modules
-- [ ] T011 [P] Implement TokenStorage class in src/watchers/auth/token_storage.py (OS keyring with encrypted file fallback)
-- [ ] T012 [P] Create src/mcp/ directory for MCP server modules
-- [ ] T013 [P] Create src/approval/ directory for approval workflow modules
-- [ ] T014 [P] Create src/scheduling/ directory for scheduler modules
-- [ ] T015 [P] Create src/planning/ directory for Plan.md generation
-- [ ] T016 Implement MCPServer base class in src/mcp/server.py (tool registry, validation, approval check, audit logging)
-- [ ] T017 Implement ApprovalQueue class in src/approval/queue.py (create, list, get, update approval requests)
-- [ ] T018 [P] Implement RiskClassifier in src/approval/risk_classifier.py (classify actions as low/medium/high risk)
-- [ ] T019 [P] Create src/mcp/tools/ directory for MCP tool implementations
+- [x] T010 Create src/watchers/auth/ directory for authentication modules
+- [x] T011 [P] Implement TokenStorage class in src/watchers/auth/token_storage.py (OS keyring with encrypted file fallback)
+- [x] T012 [P] Create src/mcp/ directory for MCP server modules
+- [x] T013 [P] Create src/approval/ directory for approval workflow modules
+- [x] T014 [P] Create src/scheduling/ directory for scheduler modules
+- [x] T015 [P] Create src/planning/ directory for Plan.md generation
+- [x] T016 Implement MCPServer base class in src/mcp/server.py (tool registry, validation, approval check, audit logging)
+- [x] T017 Implement ApprovalQueue class in src/approval/queue.py (create, list, get, update approval requests)
+- [x] T018 [P] Implement RiskClassifier in src/approval/risk_classifier.py (classify actions as low/medium/high risk)
+- [x] T019 [P] Create src/mcp/tools/ directory for MCP tool implementations
 - [ ] T020 Update src/orchestrator.py to support multi-watcher coordination (add watcher registry, concurrent execution)
-- [ ] T021 [P] Create 8 new agent skill files in .specify/commands/ directory (classify-email, classify-whatsapp, classify-linkedin, generate-linkedin-post, create-plan, draft-email-reply, draft-whatsapp-reply, validate-action)
+- [x] T021 [P] Create 8 new agent skill files in .specify/commands/ directory (classify-email, classify-whatsapp, classify-linkedin, generate-linkedin-post, create-plan, draft-email-reply, draft-whatsapp-reply, validate-action)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

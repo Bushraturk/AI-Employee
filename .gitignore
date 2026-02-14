@@ -32,6 +32,13 @@ logs/
 # AI Employee Vault
 AI_Employee_Vault/
 
+# Silver Tier - OAuth2 and Authentication
+credentials/
+whatsapp_session/
+*.token
+*.key
+*.crt
+
 # OS
 .DS_Store
 Thumbs.db
