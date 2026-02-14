@@ -52,7 +52,7 @@
 - [x] T017 Implement ApprovalQueue class in src/approval/queue.py (create, list, get, update approval requests)
 - [x] T018 [P] Implement RiskClassifier in src/approval/risk_classifier.py (classify actions as low/medium/high risk)
 - [x] T019 [P] Create src/mcp/tools/ directory for MCP tool implementations
-- [ ] T020 Update src/orchestrator.py to support multi-watcher coordination (add watcher registry, concurrent execution)
+- [x] T020 Update src/orchestrator.py to support multi-watcher coordination (add watcher registry, concurrent execution)
 - [x] T021 [P] Create 8 new agent skill files in .specify/commands/ directory (classify-email, classify-whatsapp, classify-linkedin, generate-linkedin-post, create-plan, draft-email-reply, draft-whatsapp-reply, validate-action)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel

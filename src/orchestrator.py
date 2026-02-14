@@ -30,6 +30,9 @@ class Orchestrator:
                 - claude_code_path: Path to Claude Code CLI
                 - task_timeout: Timeout for task processing in seconds
                 - max_retries: Maximum retry attempts for failed tasks
+                - enable_gmail_watcher: Enable Gmail watcher (default: False)
+                - enable_whatsapp_watcher: Enable WhatsApp watcher (default: False)
+                - enable_linkedin_watcher: Enable LinkedIn watcher (default: False)
         """
         self.config = config
         self.vault_path = Path(config['vault_path']).resolve()
@@ -41,18 +44,65 @@ class Orchestrator:
         self.dashboard_manager = DashboardManager(str(self.vault_path))
         self.audit_logger = AuditLogger(str(self.vault_path))
 
-        # Initialize FileSystem watcher
+        # Watcher registry for multi-channel support
+        self.watchers = {}
+        self.watcher_health = {}
+
+        # Initialize FileSystem watcher (Bronze phase - always enabled)
         watcher_config = {
             'inbox_folder': 'Inbox',
             'file_extensions': ['.md'],
             'watch_recursive': False
         }
-        self.watcher = FileSystemWatcher(str(self.vault_path), watcher_config)
+        self.watchers['filesystem'] = FileSystemWatcher(str(self.vault_path), watcher_config)
+        self.watcher_health['filesystem'] = {
+            'status': 'stopped',
+            'last_check': None,
+            'error_count': 0
+        }
+
+        # Initialize additional watchers if enabled (Silver phase)
+        # Note: Actual watcher implementations will be added in Phase 3
+        if config.get('enable_gmail_watcher', False):
+            logger.info("Gmail watcher enabled (will be initialized in Phase 3)")
+            # self.watchers['gmail'] = GmailWatcher(...)
+            self.watcher_health['gmail'] = {
+                'status': 'pending',
+                'last_check': None,
+                'error_count': 0
+            }
+
+        if config.get('enable_whatsapp_watcher', False):
+            logger.info("WhatsApp watcher enabled (will be initialized in Phase 3)")
+            # self.watchers['whatsapp'] = WhatsAppWatcher(...)
+            self.watcher_health['whatsapp'] = {
+                'status': 'pending',
+                'last_check': None,
+                'error_count': 0
+            }
+
+        if config.get('enable_linkedin_watcher', False):
+            logger.info("LinkedIn watcher enabled (will be initialized in Phase 3)")
+            # self.watchers['linkedin'] = LinkedInWatcher(...)
+            self.watcher_health['linkedin'] = {
+                'status': 'pending',
+                'last_check': None,
+                'error_count': 0
+            }
+
+        # Maintain backward compatibility
+        self.watcher = self.watchers['filesystem']
 
         # State
         self.running = False
         self.tasks_processed = 0
         self.tasks_failed = 0
+        self.tasks_by_channel = {
+            'filesystem': 0,
+            'gmail': 0,
+            'whatsapp': 0,
+            'linkedin': 0
+        }
 
     def start(self) -> None:
         """Start the orchestrator and begin processing tasks."""
@@ -73,13 +123,24 @@ class Orchestrator:
             if not self.vault_manager.validate_vault_structure():
                 raise RuntimeError("Vault structure validation failed")
 
-            # Start watcher
-            self.watcher.start()
+            # Start all registered watchers
+            for watcher_name, watcher in self.watchers.items():
+                try:
+                    logger.info(f"Starting {watcher_name} watcher...")
+                    watcher.start()
+                    self.watcher_health[watcher_name]['status'] = 'running'
+                    self.watcher_health[watcher_name]['last_check'] = datetime.now()
+                    logger.info(f"{watcher_name} watcher started successfully")
+                except Exception as e:
+                    logger.error(f"Error starting {watcher_name} watcher: {e}")
+                    self.watcher_health[watcher_name]['status'] = 'error'
+                    self.watcher_health[watcher_name]['error_count'] += 1
 
-            # Scan for existing files in Inbox
-            existing_count = self.watcher.scan_existing_files()
-            if existing_count > 0:
-                logger.info(f"Found {existing_count} existing files in Inbox")
+            # Scan for existing files in Inbox (FileSystem watcher)
+            if 'filesystem' in self.watchers:
+                existing_count = self.watchers['filesystem'].scan_existing_files()
+                if existing_count > 0:
+                    logger.info(f"Found {existing_count} existing files in Inbox")
 
             self.running = True
             logger.info("Orchestrator started successfully")
@@ -104,11 +165,14 @@ class Orchestrator:
 
         self.running = False
 
-        # Stop watcher
-        try:
-            self.watcher.stop()
-        except Exception as e:
-            logger.error(f"Error stopping watcher: {e}")
+        # Stop all watchers
+        for watcher_name, watcher in self.watchers.items():
+            try:
+                logger.info(f"Stopping {watcher_name} watcher...")
+                watcher.stop()
+                self.watcher_health[watcher_name]['status'] = 'stopped'
+            except Exception as e:
+                logger.error(f"Error stopping {watcher_name} watcher: {e}")
 
         # Log system stop
         self.audit_logger.log_action(
@@ -122,17 +186,32 @@ class Orchestrator:
         logger.info(f"Orchestrator stopped. Processed: {self.tasks_processed}, Failed: {self.tasks_failed}")
 
     def _processing_loop(self) -> None:
-        """Main processing loop - checks for new tasks and processes them."""
+        """Main processing loop - checks for new tasks from all watchers and processes them."""
         logger.info("Entering main processing loop...")
 
         while self.running:
             try:
-                # Get new tasks from watcher
-                new_tasks = self.watcher.get_new_tasks()
+                # Get new tasks from all watchers
+                for watcher_name, watcher in self.watchers.items():
+                    try:
+                        new_tasks = watcher.get_new_tasks()
 
-                # Process each task
-                for task_info in new_tasks:
-                    self._process_task(task_info)
+                        # Process each task
+                        for task_info in new_tasks:
+                            # Add channel metadata
+                            task_info['channel'] = watcher_name
+                            self._process_task(task_info)
+                            self.tasks_by_channel[watcher_name] += 1
+
+                        # Update watcher health
+                        self.watcher_health[watcher_name]['last_check'] = datetime.now()
+                        self.watcher_health[watcher_name]['error_count'] = 0
+
+                    except Exception as e:
+                        logger.error(f"Error getting tasks from {watcher_name} watcher: {e}")
+                        self.watcher_health[watcher_name]['error_count'] += 1
+                        if self.watcher_health[watcher_name]['error_count'] >= 5:
+                            self.watcher_health[watcher_name]['status'] = 'error'
 
                 # Sleep briefly to avoid busy-waiting
                 time.sleep(0.5)
