@@ -29,46 +29,58 @@ class RiskClassifier:
     @staticmethod
     def classify_action(
         action_type: str,
-        parameters: Dict[str, Any]
-    ) -> str:
+        action_details: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Classify action risk level
 
         Args:
             action_type: Type of action (send_email, post_linkedin, send_whatsapp)
-            parameters: Action parameters
+            action_details: Action details/parameters
 
         Returns:
-            Risk level: 'low', 'medium', or 'high'
+            Dictionary with 'risk_level' and 'risk_factors'
         """
+        risk_factors = []
+
         # Base risk level by action type
         base_risk = RiskClassifier._get_base_risk(action_type)
 
         # Check for bulk operations (high risk)
-        if RiskClassifier._is_bulk_operation(action_type, parameters):
-            return 'high'
+        if RiskClassifier._is_bulk_operation(action_type, action_details):
+            risk_factors.append('Bulk operation')
+            return {'risk_level': 'high', 'risk_factors': risk_factors}
+
+        # Check for PII
+        if RiskClassifier._contains_pii(action_details):
+            risk_factors.append('Contains PII')
+            return {'risk_level': 'high', 'risk_factors': risk_factors}
 
         # Check for sensitive content
-        if RiskClassifier._contains_sensitive_content(parameters):
-            return 'high'
+        if RiskClassifier._contains_sensitive_content(action_details):
+            risk_factors.append('Contains sensitive content')
+            return {'risk_level': 'high', 'risk_factors': risk_factors}
 
         # Check for high-risk keywords
-        if RiskClassifier._contains_high_risk_keywords(parameters):
-            return 'high'
+        if RiskClassifier._contains_high_risk_keywords(action_details):
+            risk_factors.append('Contains high-risk keywords')
+            return {'risk_level': 'high', 'risk_factors': risk_factors}
 
         # Check for medium-risk keywords
-        if RiskClassifier._contains_medium_risk_keywords(parameters):
-            return max(base_risk, 'medium', key=lambda x: ['low', 'medium', 'high'].index(x))
+        if RiskClassifier._contains_medium_risk_keywords(action_details):
+            risk_factors.append('Contains medium-risk keywords')
+            final_risk = max(base_risk, 'medium', key=lambda x: ['low', 'medium', 'high'].index(x))
+            return {'risk_level': final_risk, 'risk_factors': risk_factors}
 
-        return base_risk
+        return {'risk_level': base_risk, 'risk_factors': risk_factors}
 
     @staticmethod
     def _get_base_risk(action_type: str) -> str:
         """Get base risk level for action type"""
         risk_map = {
-            'send_email': 'medium',
+            'send_email': 'low',
             'post_linkedin': 'medium',
-            'send_whatsapp': 'medium',
+            'send_whatsapp': 'low',
             'read_email': 'low',
             'get_linkedin_analytics': 'low',
             'create_task': 'low',
@@ -89,6 +101,69 @@ class RiskClassifier:
             recipients = parameters.get('recipients', [])
             if isinstance(recipients, list) and len(recipients) > 5:
                 return True
+
+        return False
+
+    @staticmethod
+    def _contains_pii(data) -> bool:
+        """
+        Check if data contains PII (Personally Identifiable Information)
+
+        Args:
+            data: String or dictionary to check
+
+        Returns:
+            True if PII detected
+        """
+        # Handle string input directly
+        if isinstance(data, str):
+            content = data
+
+            # Check for credit card patterns
+            if RiskClassifier._contains_credit_card_pattern(content):
+                return True
+
+            # Check for SSN patterns
+            if RiskClassifier._contains_ssn_pattern(content):
+                return True
+
+            # Check for email addresses
+            import re
+            if re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', content):
+                return True
+
+            # Check for phone numbers (various formats)
+            if re.search(r'\b\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b', content):
+                return True
+
+            return False
+
+        # Handle dictionary input
+        if not isinstance(data, dict):
+            return False
+
+        content_fields = ['body', 'message', 'content', 'subject', 'text']
+
+        for field in content_fields:
+            if field in data:
+                content = str(data[field])
+
+                # Check for credit card patterns
+                if RiskClassifier._contains_credit_card_pattern(content):
+                    return True
+
+                # Check for SSN patterns
+                if RiskClassifier._contains_ssn_pattern(content):
+                    return True
+
+                # Check for email addresses
+                import re
+                if re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', content):
+                    return True
+
+                # Check for phone numbers
+                if re.search(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', content):
+                    return True
 
         return False
 

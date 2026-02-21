@@ -11,6 +11,9 @@ from datetime import datetime
 from typing import Dict, Any, Optional, Callable
 from pathlib import Path
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class MCPServer:
@@ -274,3 +277,118 @@ class MCPServer:
             'parameters_schema': tool['parameters_schema'],
             'enabled': tool['enabled']
         }
+
+    def initialize_default_tools(self):
+        """Initialize and register default MCP tools"""
+        try:
+            from mcp.tools.gmail_tool import GmailTool
+            from mcp.tools.whatsapp_tool import WhatsAppTool
+
+            # Initialize Gmail tool
+            gmail_tool = GmailTool(str(self.vault_path))
+
+            # Register send_email tool
+            self.register_tool(
+                name='send_email',
+                handler=gmail_tool.send_email,
+                risk_level='medium',
+                requires_approval=True,
+                description='Send an email via Gmail API',
+                parameters_schema={
+                    'type': 'object',
+                    'properties': {
+                        'to': {'type': 'string', 'description': 'Recipient email address'},
+                        'subject': {'type': 'string', 'description': 'Email subject'},
+                        'body': {'type': 'string', 'description': 'Email body content'},
+                        'cc': {'type': 'string', 'description': 'CC recipients (optional)'},
+                        'bcc': {'type': 'string', 'description': 'BCC recipients (optional)'},
+                        'html': {'type': 'boolean', 'description': 'Whether body is HTML (default: false)'}
+                    },
+                    'required': ['to', 'subject', 'body']
+                }
+            )
+
+            # Register create_draft tool
+            self.register_tool(
+                name='create_email_draft',
+                handler=gmail_tool.create_draft,
+                risk_level='low',
+                requires_approval=False,
+                description='Create an email draft (for rollback capability)',
+                parameters_schema={
+                    'type': 'object',
+                    'properties': {
+                        'to': {'type': 'string', 'description': 'Recipient email address'},
+                        'subject': {'type': 'string', 'description': 'Email subject'},
+                        'body': {'type': 'string', 'description': 'Email body content'},
+                        'cc': {'type': 'string', 'description': 'CC recipients (optional)'},
+                        'bcc': {'type': 'string', 'description': 'BCC recipients (optional)'},
+                        'html': {'type': 'boolean', 'description': 'Whether body is HTML (default: false)'}
+                    },
+                    'required': ['to', 'subject', 'body']
+                }
+            )
+
+            # Register delete_draft tool
+            self.register_tool(
+                name='delete_email_draft',
+                handler=gmail_tool.delete_draft,
+                risk_level='low',
+                requires_approval=False,
+                description='Delete an email draft (rollback capability)',
+                parameters_schema={
+                    'type': 'object',
+                    'properties': {
+                        'draft_id': {'type': 'string', 'description': 'Draft ID to delete'}
+                    },
+                    'required': ['draft_id']
+                }
+            )
+
+            # Initialize WhatsApp tool
+            whatsapp_tool = WhatsAppTool(str(self.vault_path))
+
+            # Register send_whatsapp tool
+            self.register_tool(
+                name='send_whatsapp',
+                handler=whatsapp_tool.send_message,
+                risk_level='medium',
+                requires_approval=True,
+                description='Send a WhatsApp message via web automation',
+                parameters_schema={
+                    'type': 'object',
+                    'properties': {
+                        'phone_number': {'type': 'string', 'description': 'Recipient phone number with country code'},
+                        'message': {'type': 'string', 'description': 'Message text to send'},
+                        'verify_delivery': {'type': 'boolean', 'description': 'Whether to verify delivery (default: true)'}
+                    },
+                    'required': ['phone_number', 'message']
+                }
+            )
+
+            # Register send_whatsapp_to_contact tool
+            self.register_tool(
+                name='send_whatsapp_to_contact',
+                handler=whatsapp_tool.send_message_to_contact,
+                risk_level='medium',
+                requires_approval=True,
+                description='Send a WhatsApp message to a saved contact by name',
+                parameters_schema={
+                    'type': 'object',
+                    'properties': {
+                        'contact_name': {'type': 'string', 'description': 'Contact name as saved in WhatsApp'},
+                        'message': {'type': 'string', 'description': 'Message text to send'},
+                        'verify_delivery': {'type': 'boolean', 'description': 'Whether to verify delivery (default: true)'}
+                    },
+                    'required': ['contact_name', 'message']
+                }
+            )
+
+            logger.info("Default MCP tools initialized successfully")
+            logger.info(f"Registered tools: {', '.join(self.tools.keys())}")
+
+        except ImportError as e:
+            logger.error(f"Error importing MCP tools: {e}")
+            logger.error("Some tools may not be available")
+        except Exception as e:
+            logger.error(f"Error initializing default tools: {e}")

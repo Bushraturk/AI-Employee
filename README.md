@@ -1,6 +1,6 @@
-# AI Employee System - Bronze Phase
+# AI Employee System - Silver Tier
 
-Local-first autonomous AI employee system that automatically detects, processes, and manages tasks through an Obsidian vault workflow.
+Local-first autonomous AI employee system with multi-channel integration (Gmail, WhatsApp, LinkedIn), human-in-the-loop approval workflow, intelligent planning, automated scheduling, and external action capabilities.
 
 ## Quick Start
 
@@ -29,10 +29,34 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Install Playwright for WhatsApp automation (Silver Tier)
+playwright install chromium
+
 # Configure environment
 cp .env.example .env
-# Edit .env and set VAULT_PATH to your desired location
+# Edit .env and configure paths and API credentials
 ```
+
+### Silver Tier Setup
+
+**Gmail Integration**:
+1. Create OAuth2 credentials in Google Cloud Console
+2. Download credentials JSON and save to `vault/.credentials/gmail_credentials.json`
+3. First run will open browser for OAuth2 consent
+
+**WhatsApp Integration**:
+1. First run will open WhatsApp Web
+2. Scan QR code with your phone
+3. Session persists in `whatsapp_session/` directory
+
+**LinkedIn Integration**:
+1. Configure LinkedIn API credentials in `.env`
+2. Set `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`
+3. Run authentication: `python linkedin_authenticate.py`
+4. For personal profile posting: Use `linkedin_publish.py` (automatic)
+5. For company page posting: Use `linkedin_quick_post.py` (semi-automated)
+   - Note: LinkedIn restricts company page API access to verified partners
+   - Semi-automated approach: content copied to clipboard, you paste and post
 
 ### Running the System
 
@@ -102,13 +126,60 @@ b-ai-employee/
 └── README.md                         # This file
 ```
 
-## Features (Bronze Phase - MVP)
+## Features
 
-✅ **Automatic Task Detection** - Monitors Inbox folder for new Markdown task files
-✅ **Task Processing** - Processes tasks through Claude Code for reasoning and action planning
-✅ **Workflow Management** - Moves tasks through Inbox → Needs_Action → Done stages
-✅ **Local-First** - No external APIs required, all data stored as Markdown
-✅ **Modular Architecture** - Base watcher interface for future extensions (Gmail, WhatsApp)
+### Bronze Phase (MVP) ✅
+- ✅ **Automatic Task Detection** - Monitors Inbox folder for new Markdown task files
+- ✅ **Task Processing** - Processes tasks through Claude Code for reasoning and action planning
+- ✅ **Workflow Management** - Moves tasks through Inbox → Needs_Action → Done stages
+- ✅ **Local-First** - All data stored as Markdown files
+- ✅ **Modular Architecture** - Base watcher interface for extensibility
+
+### Silver Phase (Current) ✅ **COMPLETE**
+- ✅ **Multi-Channel Detection** - Gmail, WhatsApp, and LinkedIn watchers
+  - Gmail: OAuth2 authentication, email classification, task creation
+  - WhatsApp: Web automation, message parsing, contact management
+  - LinkedIn: Feed monitoring, message tracking, mention detection
+- ✅ **Human-in-the-Loop Approval** - Approval workflow for high-risk actions
+  - Risk classification (low/medium/high)
+  - Approval queue with timeout handling
+  - Multi-channel notifications (console, file, email)
+  - Complete audit trail
+- ✅ **LinkedIn Auto-Posting** - Automated business development posts
+  - Post generation from business context
+  - Optimal time scheduling (2-3 posts per week)
+  - Performance tracking (views, engagement)
+  - Human approval before posting
+  - Personal profile (automatic) & Company page (semi-automatic)
+- ✅ **Intelligent Planning** - Automatic plan generation for complex tasks
+  - Multi-step task analysis
+  - Plan.md generation with approach options
+  - Risk identification and mitigation
+  - Success criteria definition
+- ✅ **Task Scheduling** - Recurring task automation
+  - Cron-based schedules (e.g., daily at 9 AM)
+  - Interval schedules (e.g., every 2 hours)
+  - One-time execution at specific time
+  - Schedule management CLI
+  - Execution history logging
+- ✅ **MCP Tools** - External action capabilities
+  - Gmail: Send emails, create drafts, rollback capability
+  - WhatsApp: Send messages with rate limiting (5/minute)
+  - Parameter sanitization for privacy
+  - Approval integration for high-risk actions
+- ✅ **Agent Skills Framework** - Modular AI capabilities
+  - 5 registered skills (planning, approval, MCP, scheduling, LinkedIn)
+  - Skill registry and discovery system
+  - Consistent execution interface
+  - Extensible architecture
+- ✅ **Real-Time Dashboard** - Live metrics and status
+  - Multi-channel task counts
+  - Approval workflow metrics
+  - Performance tracking
+  - System health monitoring
+
+**Status:** 100% Complete - All 7 requirements met and tested
+**See:** `SILVER_TIER_COMPLETE.md` for detailed completion report
 
 ## Configuration
 
@@ -126,6 +197,48 @@ TASK_TIMEOUT=60
 
 # Logging level (DEBUG, INFO, WARNING, ERROR)
 LOG_LEVEL=INFO
+
+# Silver Tier - Multi-Channel Watchers
+ENABLE_GMAIL_WATCHER=true
+ENABLE_WHATSAPP_WATCHER=true
+ENABLE_LINKEDIN_WATCHER=true
+
+# Silver Tier - Gmail Configuration
+GMAIL_POLL_INTERVAL=30
+GMAIL_LABELS=INBOX
+GMAIL_EXCLUDE_LABELS=SPAM,TRASH
+
+# Silver Tier - WhatsApp Configuration
+WHATSAPP_POLL_INTERVAL=30
+WHATSAPP_SESSION_PATH=whatsapp_session/
+
+# Silver Tier - LinkedIn Configuration
+LINKEDIN_POLL_INTERVAL=60
+LINKEDIN_CLIENT_ID=your_client_id
+LINKEDIN_CLIENT_SECRET=your_client_secret
+
+# Silver Tier - Approval Workflow
+NOTIFICATIONS_CONSOLE=true
+NOTIFICATIONS_FILE=true
+NOTIFICATIONS_EMAIL=false
+
+# Silver Tier - LinkedIn Auto-Posting
+ENABLE_LINKEDIN_POSTING=true
+LINKEDIN_AUTO_POST=true
+LINKEDIN_POST_FREQUENCY=2.5
+LINKEDIN_TIMEZONE=UTC
+
+# Silver Tier - Intelligent Planning
+MIN_STEPS_FOR_PLAN=3
+
+# Silver Tier - Task Scheduling
+ENABLE_TASK_SCHEDULING=true
+SCHEDULER_TIMEZONE=UTC
+SCHEDULER_MAX_INSTANCES=3
+
+# Silver Tier - MCP Tools
+ENABLE_MCP_SERVER=true
+MCP_ENABLED_TOOLS=send_email,send_whatsapp
 ```
 
 ## Task File Format
