@@ -35,3 +35,16 @@ cryptography>=41.0.0
 # Scheduling
 APScheduler>=3.10.0
 pytz>=2023.3
+
+# Gold Tier - Autonomous Employee Dependencies
+
+# Odoo Integration
+odoorpc>=0.10.1
+
+# Social Media APIs
+requests>=2.31.0
+tweepy>=4.14.0
+
+# Error Recovery
+tenacity>=8.2.0
+pybreaker>=1.0.0
