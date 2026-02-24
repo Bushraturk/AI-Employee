@@ -1,0 +1,30 @@
+servers:
+  accounting:
+    script: src/mcp_servers/accounting_mcp/server.py
+    enabled: true
+    restart_on_failure: true
+    max_restarts: 3
+    rate_limits:
+      calls_per_minute: 60
+      calls_per_hour: 1000
+      concurrent_requests: 5
+
+  social:
+    script: src/mcp_servers/social_mcp/server.py
+    enabled: true
+    restart_on_failure: true
+    max_restarts: 3
+    rate_limits:
+      calls_per_minute: 50
+      calls_per_hour: 800
+      concurrent_requests: 3
+
+  communications:
+    script: src/mcp_servers/comms_mcp/server.py
+    enabled: true
+    restart_on_failure: true
+    max_restarts: 3
+    rate_limits:
+      calls_per_minute: 60
+      calls_per_hour: 1000
+      concurrent_requests: 5

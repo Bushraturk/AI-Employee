@@ -1,0 +1,32 @@
+schedules:
+  # Existing schedules (Bronze/Silver)
+  - name: "Check Gmail"
+    cron: "*/5 * * * *"
+    action: "check_gmail"
+    enabled: true
+
+  - name: "Check WhatsApp"
+    cron: "*/2 * * * *"
+    action: "check_whatsapp"
+    enabled: true
+
+  # Gold Tier schedules
+  - name: "Sync Odoo Transactions"
+    cron: "*/5 * * * *"
+    action: "sync_odoo_transactions"
+    enabled: true
+
+  - name: "Update Social Media Metrics"
+    cron: "0 */6 * * *"  # Every 6 hours
+    action: "update_social_metrics"
+    enabled: true
+
+  - name: "Generate Weekly Audit"
+    cron: "0 18 * * 0"  # Sunday 6 PM
+    action: "generate_weekly_audit"
+    enabled: true
+
+  - name: "Health Check MCP Servers"
+    cron: "*/1 * * * *"  # Every minute
+    action: "health_check_mcp_servers"
+    enabled: true
