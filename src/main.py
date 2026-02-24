@@ -3,6 +3,7 @@
 import sys
 import os
 import logging
+import argparse
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -18,8 +19,49 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_configuration() -> dict:
-    """Load configuration from environment variables.
+def parse_arguments():
+    """Parse command line arguments.
+
+    Returns:
+        Parsed arguments
+    """
+    parser = argparse.ArgumentParser(
+        description='AI Employee System - Autonomous task processing',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python main.py                    # Run in Bronze/Silver mode
+  python main.py --gold-tier        # Run in Gold Tier mode (autonomous)
+  python main.py --gold-tier --verbose  # Gold Tier with verbose logging
+        """
+    )
+
+    parser.add_argument(
+        '--gold-tier',
+        action='store_true',
+        help='Enable Gold Tier features (Odoo sync, social media, autonomous workflows)'
+    )
+
+    parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose logging (DEBUG level)'
+    )
+
+    parser.add_argument(
+        '--vault',
+        type=str,
+        help='Override vault path from environment'
+    )
+
+    return parser.parse_args()
+
+
+def load_configuration(args) -> dict:
+    """Load configuration from environment variables and arguments.
+
+    Args:
+        args: Parsed command line arguments
 
     Returns:
         Configuration dictionary
@@ -28,16 +70,17 @@ def load_configuration() -> dict:
     load_dotenv()
 
     # Get required configuration
-    vault_path = os.getenv('VAULT_PATH')
+    vault_path = args.vault or os.getenv('VAULT_PATH')
     if not vault_path:
-        raise ValueError("VAULT_PATH not set in environment")
+        raise ValueError("VAULT_PATH not set in environment or --vault argument")
 
     config = {
         'vault_path': vault_path,
         'claude_code_path': os.getenv('CLAUDE_CODE_PATH', 'claude'),
         'task_timeout': int(os.getenv('TASK_TIMEOUT', '60')),
         'max_retries': 3,
-        'log_level': os.getenv('LOG_LEVEL', 'INFO')
+        'log_level': 'DEBUG' if args.verbose else os.getenv('LOG_LEVEL', 'INFO'),
+        'gold_tier': args.gold_tier
     }
 
     return config
@@ -75,13 +118,37 @@ def validate_configuration(config: dict) -> bool:
 def main():
     """Main entry point."""
     try:
+        # Parse command line arguments
+        args = parse_arguments()
+
+        # Configure logging based on arguments
+        log_level = logging.DEBUG if args.verbose else logging.INFO
+        logging.basicConfig(
+            level=log_level,
+            format='[%(asctime)s] %(levelname)s: %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S',
+            force=True  # Reconfigure if already configured
+        )
+
+        # Display banner
+        tier_name = "Gold Tier (Autonomous)" if args.gold_tier else "Bronze/Silver Tier"
         logger.info("=" * 60)
-        logger.info("AI Employee System - Bronze Phase")
+        logger.info(f"AI Employee System - {tier_name}")
         logger.info("=" * 60)
+
+        if args.gold_tier:
+            logger.info("Gold Tier Features Enabled:")
+            logger.info("  - Odoo Integration (bidirectional sync)")
+            logger.info("  - Social Media Management (multi-platform)")
+            logger.info("  - Weekly Business Intelligence Reports")
+            logger.info("  - Autonomous Multi-Step Workflows (Ralph Wiggum)")
+            logger.info("  - MCP Server Orchestration")
+            logger.info("  - Advanced Error Recovery")
+            logger.info("=" * 60)
 
         # Load configuration
         logger.info("Loading configuration...")
-        config = load_configuration()
+        config = load_configuration(args)
 
         # Validate configuration
         if not validate_configuration(config):

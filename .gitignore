@@ -39,6 +39,13 @@ whatsapp_session/
 *.key
 *.crt
 
+# Gold Tier - Scheduling and State
+jobs.sqlite
+jobs.sqlite-journal
+
+# Gold Tier - Action Queues and Circuit State
+# (These are in vault, already ignored above)
+
 # OS
 .DS_Store
 Thumbs.db

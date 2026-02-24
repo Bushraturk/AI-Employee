@@ -208,3 +208,36 @@ Wait for consent; never auto-create ADRs. Group related decisions (stacks, authe
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+
+## Technology Stack
+
+### Core (Bronze/Silver Tiers)
+- **Language**: Python 3.9+
+- **File Watching**: watchdog
+- **Markdown Processing**: frontmatter, markdown
+- **Configuration**: python-dotenv
+- **Testing**: pytest
+- **Scheduling**: APScheduler
+- **Email**: Gmail API
+- **Social Media**: LinkedIn API
+- **Messaging**: WhatsApp
+
+### Gold Tier Additions
+- **Odoo Integration**: odoorpc (v0.10.1+) for JSON-RPC communication with Odoo Community Edition v19+
+- **Social Media APIs**:
+  - requests (for Facebook Graph API, Instagram Graph API)
+  - tweepy (v4.14+) for Twitter API v2
+- **Error Recovery**:
+  - tenacity (v8.2.0+) for retry logic with exponential backoff
+  - pybreaker (v1.0.0+) for circuit breaker pattern
+- **MCP Server Orchestration**: subprocess module for process-based server management
+- **Persistence**: SQLite job store for APScheduler (job persistence across restarts)
+
+### Architecture Patterns
+- **Modular Watcher Architecture**: Independent, pluggable watcher modules
+- **Multiple MCP Servers**: Domain-separated servers (accounting, social, communications) running as independent processes
+- **Perception → Reasoning → Action Loop**: Explicit three-stage pipeline
+- **Markdown as System Memory**: All state stored as human-readable Markdown files
+- **Human-in-the-Loop**: Approval workflow for risk actions
+- **Error Recovery**: Retry with exponential backoff, circuit breakers, action queuing
+- **Ralph Wiggum Autonomous Loop**: Multi-step workflow execution with automatic error recovery
