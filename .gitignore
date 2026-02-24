@@ -49,3 +49,15 @@ jobs.sqlite-journal
 # OS
 .DS_Store
 Thumbs.db
+
+# Test and Debug Files
+send_whatsapp_*.py
+whatsapp_debug_screenshots/
+nul
+
+# Temporary test tasks
+AI_Employee_Vault/Inbox/test-*.md
+AI_Employee_Vault/Inbox/demo-*.md
+AI_Employee_Vault/Inbox/proper-*.md
+AI_Employee_Vault/Inbox/working-*.md
+AI_Employee_Vault/Inbox/final-*.md
