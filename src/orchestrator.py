@@ -74,8 +74,8 @@ class Orchestrator:
             'min_steps_for_plan': config.get('min_steps_for_plan', 3)
         })
 
-        # Initialize DashboardManager with approval_queue for metrics
-        self.dashboard_manager = DashboardManager(str(self.vault_path), approval_queue=self.approval_queue)
+        # Initialize DashboardManager
+        self.dashboard_manager = DashboardManager(str(self.vault_path))
 
         # Initialize LinkedIn scheduler if enabled
         self.linkedin_scheduler = None

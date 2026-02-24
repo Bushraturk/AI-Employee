@@ -8,7 +8,7 @@ from pathlib import Path
 
 from skills.framework import Skill
 from linkedin.poster import LinkedInPoster
-from linkedin.post_generator import PostGenerator
+from linkedin.post_generator import LinkedInPostGenerator
 
 logger = logging.getLogger(__name__)
 
