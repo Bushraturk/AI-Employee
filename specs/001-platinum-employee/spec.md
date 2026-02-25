@@ -180,7 +180,6 @@ As a business owner, I need my AI employee to analyze my weekly business activit
 - **FR-047**: System MUST require approval for all payments regardless of amount
 - **FR-048**: System MUST require approval for all social media posts
 - **FR-049**: System MUST require approval for all accounting entries
-- **FR-050**: System MUST allow configurable auto-approval thresholds for known contacts (email only)
 
 #### Odoo Integration
 
