@@ -4,8 +4,8 @@ agent_name: Cloud Agent
 agent_type: cloud
 approvals_created: 0
 config:
-  dev_mode: false
-  dry_run: false
+  dev_mode: true
+  dry_run: true
   git_branch: main
   git_remote: null
   gmail_check_interval: 120
@@ -15,14 +15,14 @@ config:
   sync_method: git
   vault_path: C:\Users\admin\Desktop\b-ai-employee\vault
 error_count: 0
-last_heartbeat: '2026-02-25T21:46:23.898989'
+last_heartbeat: '2026-02-25T22:05:49.470943'
 metadata: {}
-started_at: '2026-02-25T21:46:23.433741'
+started_at: '2026-02-25T22:05:43.436138'
 status: busy
 tasks_completed: 0
 tasks_failed: 0
 tasks_in_progress: []
-uptime_seconds: 0
+uptime_seconds: 6
 ---
 
 # Agent Status: BUSY
@@ -34,4 +34,4 @@ uptime_seconds: 0
 **Uptime**: 0h 0m
 
 ## Recent Activity
-Last heartbeat: 2026-02-25 21:46:23
+Last heartbeat: 2026-02-25 22:05:49
