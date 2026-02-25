@@ -17,6 +17,10 @@ import logging
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

@@ -81,16 +81,31 @@ class ActionFile(BaseModel):
         metadata = dict(post.metadata)
         body = post.content
 
-        # Parse timestamp
-        timestamp_str = metadata.pop("timestamp", None)
-        timestamp = datetime.fromisoformat(timestamp_str) if timestamp_str else datetime.now()
+        # Parse timestamp (handle both string and datetime objects)
+        timestamp_value = metadata.pop("timestamp", None)
+        if isinstance(timestamp_value, datetime):
+            timestamp = timestamp_value
+        elif isinstance(timestamp_value, str):
+            timestamp = datetime.fromisoformat(timestamp_value)
+        else:
+            timestamp = datetime.now()
 
         # Parse optional datetime fields
-        claimed_at_str = metadata.pop("claimed_at", None)
-        claimed_at = datetime.fromisoformat(claimed_at_str) if claimed_at_str else None
+        claimed_at_value = metadata.pop("claimed_at", None)
+        if isinstance(claimed_at_value, datetime):
+            claimed_at = claimed_at_value
+        elif isinstance(claimed_at_value, str):
+            claimed_at = datetime.fromisoformat(claimed_at_value)
+        else:
+            claimed_at = None
 
-        completed_at_str = metadata.pop("completed_at", None)
-        completed_at = datetime.fromisoformat(completed_at_str) if completed_at_str else None
+        completed_at_value = metadata.pop("completed_at", None)
+        if isinstance(completed_at_value, datetime):
+            completed_at = completed_at_value
+        elif isinstance(completed_at_value, str):
+            completed_at = datetime.fromisoformat(completed_at_value)
+        else:
+            completed_at = None
 
         return cls(
             action_id=metadata.pop("action_id"),
