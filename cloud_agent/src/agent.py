@@ -69,10 +69,8 @@ class CloudAgent(BaseAgent):
 
         # Initialize sync manager
         self.sync_manager = SyncManager(
-            vault_root=config.vault_path,
-            sync_method=config.sync_method,
-            git_remote=config.git_remote,
-            git_branch=config.git_branch,
+            vault_config=vault_config,
+            vault_logger=self.vault_logger,
         )
 
         # Watchers

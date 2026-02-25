@@ -67,8 +67,18 @@ class GmailWatcher(BaseWatcher):
         self.token_path = token_path
         self.service = None
 
-        # Initialize Gmail API
-        self._initialize_gmail_api()
+        # Development mode
+        self.dev_mode = os.getenv("DEVELOPMENT_MODE", "false").lower() == "true"
+        self.dry_run = os.getenv("DRY_RUN_MODE", "false").lower() == "true"
+
+        # Initialize Gmail API (skip in dev mode or if credentials missing)
+        if not self.dev_mode and os.path.exists(credentials_path):
+            self._initialize_gmail_api()
+        else:
+            if self.dev_mode:
+                logger.info("[DEV MODE] Skipping Gmail API initialization")
+            else:
+                logger.warning(f"Gmail credentials not found at {credentials_path}, skipping initialization")
 
     def _initialize_gmail_api(self) -> None:
         """Initialize Gmail API service."""
