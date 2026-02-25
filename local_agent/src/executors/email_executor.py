@@ -43,16 +43,19 @@ class EmailExecutor(BaseExecutor):
             dry_run: Dry run mode flag
         """
         super().__init__(
-            executor_id=f"{agent_id}_email_executor",
             executor_name="Email Executor",
             agent_id=agent_id,
             vault_manager=vault_manager,
             vault_logger=vault_logger,
-            dev_mode=dev_mode,
-            dry_run=dry_run,
         )
 
         self.mcp_client = mcp_client
+
+        # Override dev_mode and dry_run if provided
+        if dev_mode is not None:
+            self.dev_mode = dev_mode
+        if dry_run is not None:
+            self.dry_run = dry_run
 
         logger.info("Email executor initialized")
 

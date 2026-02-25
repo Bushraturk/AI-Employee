@@ -185,9 +185,8 @@ class LocalAgent(BaseAgent):
                     # Move to Rejected folder
                     rejected_folder = "Rejected"
                     self.vault_manager.move_file(
-                        str(file_path),
-                        rejected_folder,
-                        approval.get_filename()
+                        file_path,
+                        rejected_folder
                     )
                     continue
 
@@ -207,9 +206,8 @@ class LocalAgent(BaseAgent):
                     # Move to Done folder
                     done_folder = "Done"
                     self.vault_manager.move_file(
-                        str(file_path),
-                        done_folder,
-                        approval.get_filename()
+                        file_path,
+                        done_folder
                     )
 
                     self.vault_logger.info(
