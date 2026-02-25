@@ -1,0 +1,29 @@
+# Cloud Agent Dependencies
+# Python 3.9+
+
+# File monitoring and scheduling
+watchdog==3.0.0
+APScheduler==3.10.4
+
+# Gmail API
+google-auth==2.23.4
+google-auth-oauthlib==1.1.0
+google-auth-httplib2==0.1.1
+google-api-python-client==2.108.0
+
+# Error recovery
+tenacity==8.2.3
+pybreaker==1.0.1
+
+# Markdown processing
+python-frontmatter==1.0.0
+markdown==3.5.1
+
+# Configuration
+python-dotenv==1.0.0
+
+# Vault sync
+GitPython==3.1.40
+
+# Data validation
+pydantic==2.5.2

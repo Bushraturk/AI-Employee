@@ -1,0 +1,29 @@
+# Local Agent Dependencies
+# Python 3.9+
+
+# File monitoring and scheduling
+watchdog==3.0.0
+APScheduler==3.10.4
+
+# WhatsApp Web automation
+playwright==1.40.0
+
+# Error recovery
+tenacity==8.2.3
+pybreaker==1.0.1
+
+# Markdown processing
+python-frontmatter==1.0.0
+markdown==3.5.1
+
+# Configuration
+python-dotenv==1.0.0
+
+# Vault sync
+GitPython==3.1.40
+
+# Data validation
+pydantic==2.5.2
+
+# MCP client
+requests==2.31.0

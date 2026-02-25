@@ -17,18 +17,18 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project directory structure per plan.md (cloud_agent/, local_agent/, shared/, mcp_servers/, orchestration/, deployment/, vault/, tests/, config/, docs/)
-- [ ] T002 [P] Initialize cloud_agent Python project with requirements.txt (watchdog, APScheduler, google-auth, googleapiclient, tenacity, pybreaker, frontmatter, markdown, python-dotenv, GitPython)
-- [ ] T003 [P] Initialize local_agent Python project with requirements.txt (watchdog, APScheduler, playwright, tenacity, pybreaker, frontmatter, markdown, python-dotenv, GitPython)
-- [ ] T004 [P] Initialize shared Python package with requirements.txt (frontmatter, markdown, pydantic)
-- [ ] T005 [P] Initialize email_mcp Node.js project with package.json (googleapis, @modelcontextprotocol/sdk)
+- [X] T001 Create project directory structure per plan.md (cloud_agent/, local_agent/, shared/, mcp_servers/, orchestration/, deployment/, vault/, tests/, config/, docs/)
+- [X] T002 [P] Initialize cloud_agent Python project with requirements.txt (watchdog, APScheduler, google-auth, googleapiclient, tenacity, pybreaker, frontmatter, markdown, python-dotenv, GitPython)
+- [X] T003 [P] Initialize local_agent Python project with requirements.txt (watchdog, APScheduler, playwright, tenacity, pybreaker, frontmatter, markdown, python-dotenv, GitPython)
+- [X] T004 [P] Initialize shared Python package with requirements.txt (frontmatter, markdown, pydantic)
+- [X] T005 [P] Initialize email_mcp Node.js project with package.json (googleapis, @modelcontextprotocol/sdk)
 - [ ] T006 [P] Initialize social_mcp Node.js project with package.json (axios, @modelcontextprotocol/sdk)
 - [ ] T007 [P] Initialize odoo_mcp Python project with requirements.txt (odoorpc, @modelcontextprotocol/sdk)
-- [ ] T008 Create vault directory structure per contracts/vault-structure.md (Needs_Action/, In_Progress/, Pending_Approval/, Approved/, Rejected/, Done/, Plans/, Logs/, Updates/)
-- [ ] T009 [P] Create config/.env.example with all required environment variables
-- [ ] T010 [P] Create config/.gitignore with secret exclusion patterns per research.md
-- [ ] T011 [P] Create config/pre-commit-config.yaml for secret detection
-- [ ] T012 [P] Create config/mcp_config.json for MCP server configuration
+- [X] T008 Create vault directory structure per contracts/vault-structure.md (Needs_Action/, In_Progress/, Pending_Approval/, Approved/, Rejected/, Done/, Plans/, Logs/, Updates/)
+- [X] T009 [P] Create config/.env.example with all required environment variables
+- [X] T010 [P] Create config/.gitignore with secret exclusion patterns per research.md
+- [X] T011 [P] Create config/pre-commit-config.yaml for secret detection
+- [X] T012 [P] Create config/mcp_config.json for MCP server configuration
 
 ---
 
@@ -40,21 +40,21 @@
 
 ### Shared Models and Utilities
 
-- [ ] T013 [P] Implement ActionFile model in shared/models/action_file.py per contracts/action-file-schema.json
-- [ ] T014 [P] Implement ApprovalRequest model in shared/models/approval_request.py per contracts/approval-request-schema.json
-- [ ] T015 [P] Implement AuditLogEntry model in shared/models/audit_log.py per data-model.md
-- [ ] T016 [P] Implement VaultStructure constants in shared/models/vault_structure.py per contracts/vault-structure.md
-- [ ] T017 [P] Implement markdown parser utilities in shared/utils/markdown_parser.py (frontmatter parsing, validation)
-- [ ] T018 [P] Implement safe file operations in shared/utils/file_operations.py (atomic move, claim-by-move)
-- [ ] T019 [P] Implement structured logging in shared/utils/logging_utils.py (JSON format, audit trail)
-- [ ] T020 [P] Define shared constants in shared/constants.py (folder names, file patterns, timeouts)
+- [X] T013 [P] Implement ActionFile model in shared/models/action_file.py per contracts/action-file-schema.json
+- [X] T014 [P] Implement ApprovalRequest model in shared/models/approval_request.py per contracts/approval-request-schema.json
+- [X] T015 [P] Implement AuditLogEntry model in shared/models/audit_log.py per data-model.md
+- [X] T016 [P] Implement VaultStructure constants in shared/models/vault_structure.py per contracts/vault-structure.md
+- [X] T017 [P] Implement markdown parser utilities in shared/utils/markdown_parser.py (frontmatter parsing, validation)
+- [X] T018 [P] Implement safe file operations in shared/utils/file_operations.py (atomic move, claim-by-move)
+- [X] T019 [P] Implement structured logging in shared/utils/logging_utils.py (JSON format, audit trail)
+- [X] T020 [P] Define shared constants in shared/constants.py (folder names, file patterns, timeouts)
 
 ### Base Agent Framework
 
-- [ ] T021 Implement BaseAgent abstract class in shared/models/base_agent.py per contracts/agent-api.md (start, stop, process_action_file, claim_task, update_heartbeat, get_capabilities)
-- [ ] T022 Implement BaseWatcher abstract class in shared/models/base_watcher.py (check, create_action_file, track_processed_ids)
-- [ ] T023 [P] Implement VaultSync handler in shared/vault_sync.py (Git pull/push, Syncthing status check, sync throttling)
-- [ ] T024 [P] Implement AgentState model in shared/models/agent_state.py per data-model.md (heartbeat, capabilities, claimed_tasks)
+- [X] T021 Implement BaseAgent abstract class in shared/models/base_agent.py per contracts/agent-api.md (start, stop, process_action_file, claim_task, update_heartbeat, get_capabilities)
+- [X] T022 Implement BaseWatcher abstract class in shared/models/base_watcher.py (check, create_action_file, track_processed_ids)
+- [X] T023 [P] Implement VaultSync handler in shared/vault_sync.py (Git pull/push, Syncthing status check, sync throttling)
+- [X] T024 [P] Implement AgentState model in shared/models/agent_state.py per data-model.md (heartbeat, capabilities, claimed_tasks)
 
 ### Orchestration and Process Management
 
@@ -80,28 +80,28 @@
 
 ### Cloud Agent Components for US1
 
-- [ ] T031 [P] [US1] Implement GmailWatcher in cloud_agent/src/watchers/gmail_watcher.py (inherit BaseWatcher, Gmail API integration, 2-minute check interval, create action files)
-- [ ] T032 [P] [US1] Implement EmailDrafter in cloud_agent/src/drafters/email_drafter.py (Claude API integration, context analysis, draft generation, write to Pending_Approval/email/)
-- [ ] T033 [US1] Implement CloudAgent main orchestrator in cloud_agent/src/agent.py (inherit BaseAgent, start GmailWatcher, process email action files, coordinate drafting)
-- [ ] T034 [US1] Implement cloud agent configuration in cloud_agent/src/config.py (Gmail credentials, vault path, sync settings, rate limits)
+- [X] T031 [P] [US1] Implement GmailWatcher in cloud_agent/src/watchers/gmail_watcher.py (inherit BaseWatcher, Gmail API integration, 2-minute check interval, create action files)
+- [X] T032 [P] [US1] Implement EmailDrafter in cloud_agent/src/drafters/email_drafter.py (Claude API integration, context analysis, draft generation, write to Pending_Approval/email/)
+- [X] T033 [US1] Implement CloudAgent main orchestrator in cloud_agent/src/agent.py (inherit BaseAgent, start GmailWatcher, process email action files, coordinate drafting)
+- [X] T034 [US1] Implement cloud agent configuration in cloud_agent/src/config.py (Gmail credentials, vault path, sync settings, rate limits)
 
 ### Local Agent Components for US1
 
-- [ ] T035 [P] [US1] Implement EmailExecutor in local_agent/src/executors/email_executor.py (MCP client integration, send email, log action, move to Done)
-- [ ] T036 [US1] Implement LocalAgent approval handler in local_agent/src/approval_handler.py (monitor Approved/, execute email sends, update Dashboard)
-- [ ] T037 [US1] Implement LocalAgent main orchestrator in local_agent/src/agent.py (inherit BaseAgent, monitor Approved/, coordinate execution)
-- [ ] T038 [US1] Implement local agent configuration in local_agent/src/config.py (MCP server endpoints, vault path, sync settings)
+- [X] T035 [P] [US1] Implement EmailExecutor in local_agent/src/executors/email_executor.py (MCP client integration, send email, log action, move to Done)
+- [X] T036 [US1] Implement LocalAgent approval handler in local_agent/src/approval_handler.py (monitor Approved/, execute email sends, update Dashboard)
+- [X] T037 [US1] Implement LocalAgent main orchestrator in local_agent/src/agent.py (inherit BaseAgent, monitor Approved/, coordinate execution)
+- [X] T038 [US1] Implement local agent configuration in local_agent/src/config.py (MCP server endpoints, vault path, sync settings)
 
 ### MCP Server for US1
 
-- [ ] T039 [P] [US1] Implement Email MCP server in mcp_servers/email_mcp/src/index.js (Gmail API client, send_email tool, list_emails resource)
-- [ ] T040 [P] [US1] Implement Gmail client in mcp_servers/email_mcp/src/gmail_client.js (authentication, send, list, error handling)
-- [ ] T041 [US1] Add Email MCP server configuration to config/mcp_config.json
+- [X] T039 [P] [US1] Implement Email MCP server in mcp_servers/email_mcp/src/index.js (Gmail API client, send_email tool, list_emails resource)
+- [X] T040 [P] [US1] Implement Gmail client in mcp_servers/email_mcp/src/gmail_client.js (authentication, send, list, error handling)
+- [X] T041 [US1] Add Email MCP server configuration to config/mcp_config.json
 
 ### Dashboard Integration for US1
 
-- [ ] T042 [US1] Implement DashboardUpdater in local_agent/src/dashboard_updater.py (merge Updates/, write Dashboard.md, single-writer rule)
-- [ ] T043 [US1] Implement Dashboard update logic in cloud_agent for email events (write to Updates/ folder)
+- [X] T042 [US1] Implement DashboardUpdater in local_agent/src/dashboard_updater.py (merge Updates/, write Dashboard.md, single-writer rule)
+- [X] T043 [US1] Implement Dashboard update logic in cloud_agent for email events (write to Updates/ folder)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - emails detected, drafts created, approvals processed, emails sent
 

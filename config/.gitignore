@@ -1,0 +1,36 @@
+# Secrets and credentials - NEVER commit these files
+.env
+*.json
+!package.json
+!mcp_config.json
+*.token
+*.key
+*.pem
+*.p12
+*_credentials*
+*_token*
+*_secret*
+
+# WhatsApp session data
+whatsapp_session/
+
+# Odoo credentials
+odoo_credentials.json
+
+# Gmail credentials
+gmail_credentials.json
+gmail_token.json
+
+# Social media tokens
+linkedin_token.json
+facebook_token.json
+twitter_token.json
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.ppk
+
+# API keys
+api_keys.txt
+secrets.txt
