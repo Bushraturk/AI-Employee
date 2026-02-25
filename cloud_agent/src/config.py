@@ -61,10 +61,19 @@ class CloudAgentConfig:
         """
         # Get absolute vault path
         vault_path = os.getenv("VAULT_PATH", "vault")
+        project_root = Path(__file__).parent.parent.parent
         if not os.path.isabs(vault_path):
-            # Make it absolute relative to project root
-            project_root = Path(__file__).parent.parent.parent
             vault_path = str(project_root / vault_path)
+
+        # Resolve company handbook path
+        company_handbook_path = os.getenv("COMPANY_HANDBOOK_PATH", "vault/Company_Handbook.md")
+        if not os.path.isabs(company_handbook_path):
+            company_handbook_path = str(project_root / company_handbook_path)
+
+        # Resolve business goals path
+        business_goals_path = os.getenv("BUSINESS_GOALS_PATH", "vault/Business_Goals.md")
+        if not os.path.isabs(business_goals_path):
+            business_goals_path = str(project_root / business_goals_path)
 
         return cls(
             # Vault
@@ -83,8 +92,8 @@ class CloudAgentConfig:
             claude_api_key=os.getenv("CLAUDE_API_KEY"),
 
             # Business context
-            company_handbook_path=os.getenv("COMPANY_HANDBOOK_PATH", "vault/Company_Handbook.md"),
-            business_goals_path=os.getenv("BUSINESS_GOALS_PATH", "vault/Business_Goals.md"),
+            company_handbook_path=company_handbook_path,
+            business_goals_path=business_goals_path,
 
             # Odoo
             odoo_enabled=os.getenv("ODOO_ENABLED", "false").lower() == "true",
