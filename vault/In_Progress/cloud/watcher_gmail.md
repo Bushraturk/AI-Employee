@@ -8,9 +8,9 @@ consecutive_errors: 0
 errors_count: 0
 events_detected: 0
 events_processed: 0
-last_check: '2026-02-25T21:46:23.436776'
+last_check: '2026-02-25T21:50:37.793252'
 metadata: {}
-next_check: '2026-02-25T21:48:23.436776'
+next_check: '2026-02-25T21:52:37.793252'
 status: running
 total_checks: 0
 watcher_id: cloud_agent_gmail
@@ -22,8 +22,8 @@ watcher_type: gmail
 
 **Type**: gmail
 **Check Interval**: 120s
-**Last Check**: 2026-02-25 21:46:23
-**Next Check**: 2026-02-25 21:48:23
+**Last Check**: 2026-02-25 21:50:37
+**Next Check**: 2026-02-25 21:52:37
 
 ## Statistics
 - Total Checks: 0
