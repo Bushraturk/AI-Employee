@@ -104,7 +104,7 @@ class EmailDrafter:
                 return None
 
             # Assess risk
-            risk_assessment = self.risk_assessor.assess_email_send(
+            risk_level, risk_factors = self.risk_assessor.assess_email_send(
                 recipient=sender,
                 subject=f"Re: {subject}",
                 body=draft_body,
@@ -119,8 +119,8 @@ class EmailDrafter:
                 target_id=sender,
                 timestamp=datetime.now(),
                 status=ApprovalStatus.PENDING,
-                risk_level=risk_assessment["risk_level"],
-                risk_factors=risk_assessment["risk_factors"],
+                risk_level=risk_level,
+                risk_factors=risk_factors,
                 title=f"Email to {sender}: Re: {subject}",
                 summary=f"Draft response to email from {sender}",
                 body=draft_body,

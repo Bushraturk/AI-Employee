@@ -171,9 +171,8 @@ class CloudAgent(BaseAgent):
                 # Move to In_Progress
                 in_progress_folder = f"In_Progress/{self.agent_type.value}"
                 new_path = self.vault_manager.move_file(
-                    str(file_path),
-                    in_progress_folder,
-                    action.get_filename()
+                    file_path,
+                    in_progress_folder
                 )
                 action.to_file(str(new_path))
 
@@ -184,9 +183,8 @@ class CloudAgent(BaseAgent):
                 # Move to Done
                 done_folder = "Done"
                 self.vault_manager.move_file(
-                    str(new_path),
-                    done_folder,
-                    action.get_filename()
+                    new_path,
+                    done_folder
                 )
 
                 self.vault_logger.info(
