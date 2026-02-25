@@ -146,7 +146,7 @@ class EmailDrafter:
                 details={
                     "approval_id": approval_id,
                     "recipient": sender,
-                    "risk_level": risk_assessment["risk_level"].value,
+                    "risk_level": risk_level.value,
                 }
             )
 
