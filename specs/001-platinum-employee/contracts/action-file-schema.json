@@ -1,0 +1,226 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ai-employee.local/schemas/action-file.json",
+  "title": "Action File Schema",
+  "description": "Schema for action files created by watchers in the Platinum Tier AI Employee system",
+  "type": "object",
+  "required": ["frontmatter", "body"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["id", "type", "source", "priority", "status", "created", "domain"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the action file"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["email", "whatsapp", "transaction", "file_drop"],
+          "description": "Type of event that triggered this action"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source identifier (email address, phone number, account number)"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Priority level for processing"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processing", "completed", "failed"],
+          "description": "Current processing status"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when action was created"
+        },
+        "domain": {
+          "type": "string",
+          "enum": ["email", "social", "accounting", "whatsapp"],
+          "description": "Domain category for routing"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Type-specific metadata",
+          "oneOf": [
+            {
+              "title": "Email Metadata",
+              "required": ["from", "subject", "message_id"],
+              "properties": {
+                "from": {
+                  "type": "string",
+                  "format": "email",
+                  "description": "Sender email address"
+                },
+                "subject": {
+                  "type": "string",
+                  "description": "Email subject line"
+                },
+                "message_id": {
+                  "type": "string",
+                  "description": "Gmail message ID"
+                },
+                "to": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "description": "Recipient email addresses"
+                },
+                "cc": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "description": "CC email addresses"
+                },
+                "labels": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Gmail labels"
+                }
+              }
+            },
+            {
+              "title": "WhatsApp Metadata",
+              "required": ["sender", "keywords"],
+              "properties": {
+                "sender": {
+                  "type": "string",
+                  "description": "Sender phone number or name"
+                },
+                "keywords": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Detected urgent keywords"
+                },
+                "chat_id": {
+                  "type": "string",
+                  "description": "WhatsApp chat identifier"
+                }
+              }
+            },
+            {
+              "title": "Transaction Metadata",
+              "required": ["amount", "account", "description"],
+              "properties": {
+                "amount": {
+                  "type": "number",
+                  "description": "Transaction amount"
+                },
+                "account": {
+                  "type": "string",
+                  "description": "Account number or identifier"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Transaction description"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Transaction date"
+                },
+                "category": {
+                  "type": "string",
+                  "description": "Transaction category"
+                }
+              }
+            },
+            {
+              "title": "File Drop Metadata",
+              "required": ["original_name", "size"],
+              "properties": {
+                "original_name": {
+                  "type": "string",
+                  "description": "Original file name"
+                },
+                "size": {
+                  "type": "integer",
+                  "description": "File size in bytes"
+                },
+                "mime_type": {
+                  "type": "string",
+                  "description": "MIME type of the file"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable description and suggested actions in markdown format"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "type": "email",
+        "source": "client@example.com",
+        "priority": "high",
+        "status": "pending",
+        "created": "2026-02-25T10:30:00Z",
+        "domain": "email",
+        "metadata": {
+          "from": "client@example.com",
+          "subject": "Invoice Request",
+          "message_id": "msg_123456",
+          "to": ["me@business.com"],
+          "labels": ["IMPORTANT", "INBOX"]
+        }
+      },
+      "body": "## Email Content\n\nClient is requesting invoice for January services.\n\n## Suggested Actions\n- [ ] Draft invoice reply\n- [ ] Attach invoice PDF\n- [ ] Send for approval"
+    },
+    {
+      "frontmatter": {
+        "id": "660e8400-e29b-41d4-a716-446655440001",
+        "type": "whatsapp",
+        "source": "+1234567890",
+        "priority": "high",
+        "status": "pending",
+        "created": "2026-02-25T10:35:00Z",
+        "domain": "whatsapp",
+        "metadata": {
+          "sender": "John Doe",
+          "keywords": ["urgent", "payment"],
+          "chat_id": "chat_789"
+        }
+      },
+      "body": "## Message Content\n\nUrgent: Need payment confirmation for order #123.\n\n## Suggested Actions\n- [ ] Check payment status\n- [ ] Draft confirmation reply\n- [ ] Send for approval"
+    },
+    {
+      "frontmatter": {
+        "id": "770e8400-e29b-41d4-a716-446655440002",
+        "type": "transaction",
+        "source": "Bank Account ****1234",
+        "priority": "medium",
+        "status": "pending",
+        "created": "2026-02-25T10:40:00Z",
+        "domain": "accounting",
+        "metadata": {
+          "amount": 1500.00,
+          "account": "****1234",
+          "description": "Payment from Client A",
+          "date": "2026-02-25",
+          "category": "income"
+        }
+      },
+      "body": "## Transaction Details\n\nReceived payment of $1,500 from Client A.\n\n## Suggested Actions\n- [ ] Match to invoice\n- [ ] Draft Odoo entry\n- [ ] Send for approval"
+    }
+  ]
+}

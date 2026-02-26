@@ -1,0 +1,262 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://ai-employee.local/schemas/approval-request.json",
+  "title": "Approval Request Schema",
+  "description": "Schema for approval request files requiring human approval before execution",
+  "type": "object",
+  "required": ["frontmatter", "body"],
+  "properties": {
+    "frontmatter": {
+      "type": "object",
+      "required": ["id", "action_type", "target", "created", "expires", "status", "action_file_id", "parameters"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for the approval request"
+        },
+        "action_type": {
+          "type": "string",
+          "enum": ["email_send", "social_post", "accounting_entry", "whatsapp_send", "payment"],
+          "description": "Type of action requiring approval"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target identifier (email address, platform, account)"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when request was created"
+        },
+        "expires": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when request expires (24 hours from created)"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "expired"],
+          "description": "Current approval status"
+        },
+        "action_file_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Reference to originating action file"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Action-specific parameters",
+          "oneOf": [
+            {
+              "title": "Email Send Parameters",
+              "required": ["to", "subject", "body"],
+              "properties": {
+                "to": {
+                  "type": "string",
+                  "format": "email",
+                  "description": "Recipient email address"
+                },
+                "subject": {
+                  "type": "string",
+                  "description": "Email subject line"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "Email body content"
+                },
+                "attachments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Attachment file paths"
+                },
+                "cc": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "description": "CC recipients"
+                },
+                "bcc": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "description": "BCC recipients"
+                }
+              }
+            },
+            {
+              "title": "Social Post Parameters",
+              "required": ["platform", "content"],
+              "properties": {
+                "platform": {
+                  "type": "string",
+                  "enum": ["facebook", "instagram", "twitter", "linkedin"],
+                  "description": "Target social media platform"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Post content text"
+                },
+                "media": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Media file paths (images, videos)"
+                },
+                "scheduled_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Scheduled post time (optional)"
+                },
+                "hashtags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Hashtags to include"
+                }
+              }
+            },
+            {
+              "title": "Accounting Entry Parameters",
+              "required": ["entry_type", "amount", "account_code", "description"],
+              "properties": {
+                "entry_type": {
+                  "type": "string",
+                  "enum": ["invoice", "payment", "expense"],
+                  "description": "Type of accounting entry"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Transaction amount"
+                },
+                "account_code": {
+                  "type": "string",
+                  "description": "Odoo account code"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Transaction description"
+                },
+                "partner_id": {
+                  "type": "string",
+                  "description": "Odoo partner ID"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Transaction date"
+                },
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$",
+                  "description": "ISO 4217 currency code"
+                }
+              }
+            },
+            {
+              "title": "WhatsApp Send Parameters",
+              "required": ["recipient", "message"],
+              "properties": {
+                "recipient": {
+                  "type": "string",
+                  "description": "Recipient phone number or name"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Message content"
+                },
+                "chat_id": {
+                  "type": "string",
+                  "description": "WhatsApp chat identifier"
+                }
+              }
+            },
+            {
+              "title": "Payment Parameters",
+              "required": ["recipient", "amount", "reference"],
+              "properties": {
+                "recipient": {
+                  "type": "string",
+                  "description": "Payment recipient"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Payment amount"
+                },
+                "reference": {
+                  "type": "string",
+                  "description": "Payment reference"
+                },
+                "account": {
+                  "type": "string",
+                  "description": "Source account"
+                },
+                "currency": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{3}$",
+                  "description": "ISO 4217 currency code"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "body": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Detailed description, context, and approval instructions in markdown format"
+    }
+  },
+  "examples": [
+    {
+      "frontmatter": {
+        "id": "880e8400-e29b-41d4-a716-446655440003",
+        "action_type": "email_send",
+        "target": "client@example.com",
+        "created": "2026-02-25T10:45:00Z",
+        "expires": "2026-02-26T10:45:00Z",
+        "status": "pending",
+        "action_file_id": "550e8400-e29b-41d4-a716-446655440000",
+        "parameters": {
+          "to": "client@example.com",
+          "subject": "Re: Invoice Request",
+          "body": "Dear Client,\n\nPlease find attached the invoice for January services.\n\nBest regards,\nYour Business",
+          "attachments": ["/vault/Invoices/2026-01_Client.pdf"]
+        }
+      },
+      "body": "## Email Draft\n\n**To**: client@example.com\n**Subject**: Re: Invoice Request\n\n**Body**:\nDear Client,\n\nPlease find attached the invoice for January services.\n\nBest regards,\nYour Business\n\n**Attachments**:\n- Invoice_2026-01_Client.pdf\n\n## Context\n\nClient requested invoice for January services. Invoice has been generated and is ready to send.\n\n## To Approve\n\nMove this file to the `/Approved` folder.\n\n## To Reject\n\nMove this file to the `/Rejected` folder and add rejection reason in the body."
+    },
+    {
+      "frontmatter": {
+        "id": "990e8400-e29b-41d4-a716-446655440004",
+        "action_type": "accounting_entry",
+        "target": "Odoo",
+        "created": "2026-02-25T10:50:00Z",
+        "expires": "2026-02-26T10:50:00Z",
+        "status": "pending",
+        "action_file_id": "770e8400-e29b-41d4-a716-446655440002",
+        "parameters": {
+          "entry_type": "payment",
+          "amount": 1500.00,
+          "account_code": "400000",
+          "description": "Payment from Client A - Invoice #123",
+          "partner_id": "partner_456",
+          "date": "2026-02-25",
+          "currency": "USD"
+        }
+      },
+      "body": "## Accounting Entry Draft\n\n**Type**: Payment\n**Amount**: $1,500.00\n**Account**: 400000 (Revenue)\n**Partner**: Client A\n**Date**: 2026-02-25\n**Description**: Payment from Client A - Invoice #123\n\n## Context\n\nReceived payment of $1,500 from Client A. This matches Invoice #123 issued on 2026-01-15.\n\n## Validation\n\n- ✅ Amount matches invoice\n- ✅ Partner verified\n- ✅ Account code correct\n- ✅ Date is current\n\n## To Approve\n\nMove this file to the `/Approved` folder to post to Odoo.\n\n## To Reject\n\nMove this file to the `/Rejected` folder if entry is incorrect."
+    }
+  ]
+}
