@@ -1,0 +1,143 @@
+# Local Agent Process Configuration
+# Defines processes that run on the user's local machine
+
+processes:
+  local_agent:
+    command: python
+    args:
+      - "-m"
+      - "local_agent.src.agent"
+    env:
+      AGENT_TYPE: "local"
+      VAULT_PATH: "${VAULT_PATH}"
+      DEVELOPMENT_MODE: "${DEVELOPMENT_MODE:-false}"
+      DRY_RUN_MODE: "${DRY_RUN_MODE:-false}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 30
+    startup_grace_period: 10
+
+  whatsapp_watcher:
+    command: python
+    args:
+      - "-m"
+      - "local_agent.src.watchers.whatsapp_watcher"
+    env:
+      VAULT_PATH: "${VAULT_PATH}"
+      CHECK_INTERVAL: "30"
+      WHATSAPP_SESSION_PATH: "${WHATSAPP_SESSION_PATH}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 60
+    startup_grace_period: 20
+
+  finance_watcher:
+    command: python
+    args:
+      - "-m"
+      - "local_agent.src.watchers.finance_watcher"
+    env:
+      VAULT_PATH: "${VAULT_PATH}"
+      CHECK_INTERVAL: "300"
+      BANK_DATA_PATH: "${BANK_DATA_PATH}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 120
+    startup_grace_period: 10
+
+  email_mcp:
+    command: node
+    args:
+      - "mcp_servers/email_mcp/src/index.js"
+    env:
+      PORT: "3001"
+      GMAIL_CREDENTIALS_PATH: "${GMAIL_CREDENTIALS_PATH}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 3
+    restart_window_seconds: 300
+    health_check_interval: 30
+    startup_grace_period: 5
+
+  social_mcp:
+    command: node
+    args:
+      - "mcp_servers/social_mcp/src/index.js"
+    env:
+      PORT: "3002"
+      FACEBOOK_TOKEN: "${FACEBOOK_TOKEN}"
+      INSTAGRAM_TOKEN: "${INSTAGRAM_TOKEN}"
+      TWITTER_API_KEY: "${TWITTER_API_KEY}"
+      LINKEDIN_TOKEN: "${LINKEDIN_TOKEN}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 3
+    restart_window_seconds: 300
+    health_check_interval: 30
+    startup_grace_period: 5
+
+  odoo_mcp:
+    command: python
+    args:
+      - "-m"
+      - "mcp_servers.odoo_mcp.src.server"
+    env:
+      PORT: "3003"
+      ODOO_URL: "${ODOO_URL}"
+      ODOO_DB: "${ODOO_DB}"
+      ODOO_USERNAME: "${ODOO_USERNAME}"
+      ODOO_PASSWORD: "${ODOO_PASSWORD}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 3
+    restart_window_seconds: 300
+    health_check_interval: 30
+    startup_grace_period: 5
+
+  orchestrator:
+    command: python
+    args:
+      - "-m"
+      - "orchestration.orchestrator"
+      - "--agent-type"
+      - "local"
+    env:
+      VAULT_PATH: "${VAULT_PATH}"
+      MCP_CONFIG_PATH: "${MCP_CONFIG_PATH}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 30
+    startup_grace_period: 10
+
+  vault_sync:
+    command: python
+    args:
+      - "-m"
+      - "shared.sync_manager"
+      - "--agent-type"
+      - "local"
+    env:
+      VAULT_PATH: "${VAULT_PATH}"
+      SYNC_INTERVAL: "30"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 60
+    startup_grace_period: 5

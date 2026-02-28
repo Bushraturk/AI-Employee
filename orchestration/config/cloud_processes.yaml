@@ -1,0 +1,89 @@
+# Cloud Agent Process Configuration
+# Defines processes that run on the cloud VM
+
+processes:
+  cloud_agent:
+    command: python
+    args:
+      - "-m"
+      - "cloud_agent.src.agent"
+    env:
+      AGENT_TYPE: "cloud"
+      VAULT_PATH: "${VAULT_PATH}"
+      DEVELOPMENT_MODE: "${DEVELOPMENT_MODE:-false}"
+      DRY_RUN_MODE: "${DRY_RUN_MODE:-false}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 30
+    startup_grace_period: 10
+
+  gmail_watcher:
+    command: python
+    args:
+      - "-m"
+      - "cloud_agent.src.watchers.gmail_watcher"
+    env:
+      VAULT_PATH: "${VAULT_PATH}"
+      GMAIL_CREDENTIALS_PATH: "${GMAIL_CREDENTIALS_PATH}"
+      CHECK_INTERVAL: "120"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 60
+    startup_grace_period: 15
+
+  email_mcp:
+    command: node
+    args:
+      - "mcp_servers/email_mcp/src/index.js"
+    env:
+      PORT: "3001"
+      GMAIL_CREDENTIALS_PATH: "${GMAIL_CREDENTIALS_PATH}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 3
+    restart_window_seconds: 300
+    health_check_interval: 30
+    startup_grace_period: 5
+
+  orchestrator:
+    command: python
+    args:
+      - "-m"
+      - "orchestration.orchestrator"
+      - "--agent-type"
+      - "cloud"
+    env:
+      VAULT_PATH: "${VAULT_PATH}"
+      MCP_CONFIG_PATH: "${MCP_CONFIG_PATH}"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 30
+    startup_grace_period: 10
+
+  vault_sync:
+    command: python
+    args:
+      - "-m"
+      - "shared.sync_manager"
+      - "--agent-type"
+      - "cloud"
+    env:
+      VAULT_PATH: "${VAULT_PATH}"
+      SYNC_INTERVAL: "30"
+    working_dir: null
+    auto_start: true
+    restart_on_failure: true
+    max_restarts: 5
+    restart_window_seconds: 300
+    health_check_interval: 60
+    startup_grace_period: 5
