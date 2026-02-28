@@ -35,7 +35,12 @@ from shared.sync_manager import SyncManager
 
 from cloud_agent.watchers.gmail_watcher import GmailWatcher
 from cloud_agent.src.drafters.email_drafter import EmailDrafter
+from cloud_agent.src.drafters.social_drafter import SocialDrafter
+from cloud_agent.src.drafters.whatsapp_drafter import WhatsAppDrafter
+from cloud_agent.src.drafters.accounting_drafter import AccountingDrafter
 from cloud_agent.src.config import CloudAgentConfig
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 
 logger = logging.getLogger(__name__)
@@ -82,6 +87,12 @@ class CloudAgent(BaseAgent):
 
         # Drafters
         self.email_drafter: Optional[EmailDrafter] = None
+        self.accounting_drafter: Optional[AccountingDrafter] = None
+        self.social_drafter: Optional[SocialDrafter] = None
+        self.whatsapp_drafter: Optional[WhatsAppDrafter] = None
+
+        # Scheduler for periodic tasks
+        self.scheduler: Optional[BackgroundScheduler] = None
 
         logger.info(f"Cloud agent initialized (vault={config.vault_path})")
 
@@ -115,6 +126,40 @@ class CloudAgent(BaseAgent):
             company_handbook_path=self.config.company_handbook_path,
         )
 
+        # Initialize WhatsApp drafter
+        self.whatsapp_drafter = WhatsAppDrafter(
+            agent_id=self.agent_id,
+            vault_manager=self.vault_manager,
+            vault_logger=self.vault_logger,
+            claude_api_key=self.config.claude_api_key,
+            company_handbook_path=self.config.company_handbook_path,
+        )
+        self.vault_logger.info(LogCategory.AGENT, "WhatsApp drafter initialized")
+
+        # Initialize accounting drafter if enabled
+        if getattr(self.config, 'accounting_enabled', False):
+            self.accounting_drafter = AccountingDrafter(
+                agent_id=self.agent_id,
+                vault_manager=self.vault_manager,
+                vault_logger=self.vault_logger,
+                company_handbook_path=self.config.company_handbook_path,
+            )
+            self.vault_logger.info(LogCategory.AGENT, "Accounting drafter initialized")
+
+        # Initialize social drafter if enabled
+        if self.config.social_enabled:
+            self.social_drafter = SocialDrafter(
+                agent_id=self.agent_id,
+                vault_manager=self.vault_manager,
+                vault_logger=self.vault_logger,
+                claude_api_key=self.config.claude_api_key,
+                business_goals_path=self.config.business_goals_path,
+            )
+            self.vault_logger.info(LogCategory.AGENT, "Social drafter initialized")
+
+            # Setup scheduler for social media posts
+            self._setup_scheduler()
+
         # Initial vault sync
         self._sync_vault()
 
@@ -135,22 +180,16 @@ class CloudAgent(BaseAgent):
         # Sleep briefly
         time.sleep(5)
 
-    def cleanup(self) -> None:
-        """Cleanup cloud agent resources."""
-        self.vault_logger.info(LogCategory.AGENT, "Cleaning up cloud agent")
-
-        # Stop watchers
-        if self.gmail_watcher:
-            self.gmail_watcher.stop()
-
-        # Final vault sync
-        self._sync_vault()
-
-        self.vault_logger.info(LogCategory.AGENT, "Cloud agent cleanup complete")
-
     def _process_needs_action(self) -> None:
         """Process action files in Needs_Action folders."""
         # Process email actions
+        self._process_email_actions()
+
+        # Process accounting actions
+        self._process_accounting_actions()
+
+    def _process_email_actions(self) -> None:
+        """Process email action files."""
         email_folder = "Needs_Action/email"
         email_files = self.vault_manager.list_files(email_folder, pattern="*.md")
 
@@ -196,6 +235,143 @@ class CloudAgent(BaseAgent):
             except Exception as e:
                 self.vault_logger.error(
                     LogCategory.AGENT,
+                    f"Failed to process email action file: {file_path}",
+                    error_type=type(e).__name__,
+                    stack_trace=str(e),
+                )
+
+    def _process_accounting_actions(self) -> None:
+        """Process accounting action files."""
+        if not self.accounting_drafter:
+            return
+
+        accounting_folder = "Needs_Action/accounting"
+        accounting_files = self.vault_manager.list_files(accounting_folder, pattern="*.md")
+
+        for file_path in accounting_files:
+            try:
+                # Load action file
+                action = ActionFile.from_file(str(file_path))
+
+                # Skip if already claimed
+                if action.claimed_by:
+                    continue
+
+                # Claim action
+                action.claimed_by = self.agent_id
+                action.claimed_at = datetime.now()
+                action.status = ActionStatus.IN_PROGRESS
+
+                # Move to In_Progress
+                in_progress_folder = f"In_Progress/{self.agent_type.value}"
+                new_path = self.vault_manager.move_file(
+                    file_path,
+                    in_progress_folder
+                )
+                action.to_file(str(new_path))
+
+                # Draft accounting entry
+                self.accounting_drafter.draft_entry(action)
+
+                # Move to Done
+                done_folder = "Done"
+                self.vault_manager.move_file(
+                    new_path,
+                    done_folder
+                )
+
+                self.vault_logger.info(
+                    LogCategory.AGENT,
+                    f"Processed accounting action: {action.action_id}",
+                    details={"action_id": action.action_id}
+                )
+
+            except Exception as e:
+                self.vault_logger.error(
+                    LogCategory.AGENT,
+                    f"Failed to process accounting action file: {file_path}",
+                    error_type=type(e).__name__,
+                    stack_trace=str(e),
+                )
+
+    def cleanup(self) -> None:
+        """Cleanup cloud agent resources."""
+        self.vault_logger.info(LogCategory.AGENT, "Cleaning up cloud agent")
+
+        # Stop scheduler
+        if self.scheduler:
+            self.scheduler.shutdown()
+
+        # Stop watchers
+        if self.gmail_watcher:
+            self.gmail_watcher.stop()
+
+        # Final vault sync
+        self._sync_vault()
+
+        self.vault_logger.info(LogCategory.AGENT, "Cloud agent cleanup complete")
+
+    def _process_needs_action(self) -> None:
+        """Process action files in Needs_Action folders."""
+        # Process email actions
+        self._process_action_folder("Needs_Action/email", self.email_drafter)
+
+        # Process WhatsApp actions
+        self._process_action_folder("Needs_Action/whatsapp", self.whatsapp_drafter)
+
+    def _process_action_folder(self, folder: str, drafter: Any) -> None:
+        """Process action files in a specific folder.
+
+        Args:
+            folder: Folder path to process
+            drafter: Drafter instance to use
+        """
+        if not drafter:
+            return
+
+        action_files = self.vault_manager.list_files(folder, pattern="*.md")
+
+        for file_path in action_files:
+            try:
+                # Load action file
+                action = ActionFile.from_file(str(file_path))
+
+                # Skip if already claimed
+                if action.claimed_by:
+                    continue
+
+                # Claim action
+                action.claimed_by = self.agent_id
+                action.claimed_at = datetime.now()
+                action.status = ActionStatus.IN_PROGRESS
+
+                # Move to In_Progress
+                in_progress_folder = f"In_Progress/{self.agent_type.value}"
+                new_path = self.vault_manager.move_file(
+                    file_path,
+                    in_progress_folder
+                )
+                action.to_file(str(new_path))
+
+                # Draft response
+                drafter.draft_response(action)
+
+                # Move to Done
+                done_folder = "Done"
+                self.vault_manager.move_file(
+                    new_path,
+                    done_folder
+                )
+
+                self.vault_logger.info(
+                    LogCategory.AGENT,
+                    f"Processed action: {action.action_id}",
+                    details={"action_id": action.action_id, "type": action.action_type.value}
+                )
+
+            except Exception as e:
+                self.vault_logger.error(
+                    LogCategory.AGENT,
                     f"Failed to process action file: {file_path}",
                     error_type=type(e).__name__,
                     stack_trace=str(e),
@@ -212,6 +388,75 @@ class CloudAgent(BaseAgent):
 
         except Exception as e:
             logger.error(f"Vault sync failed: {e}")
+
+    def _setup_scheduler(self) -> None:
+        """Setup APScheduler for periodic social media post generation."""
+        try:
+            self.scheduler = BackgroundScheduler()
+
+            # Schedule social media posts
+            # Monday, Wednesday, Friday at 10:00 AM
+            self.scheduler.add_job(
+                func=self._generate_social_post,
+                trigger=CronTrigger(day_of_week='mon,wed,fri', hour=10, minute=0),
+                id='social_post_generation',
+                name='Generate social media posts',
+                replace_existing=True,
+            )
+
+            self.scheduler.start()
+            self.vault_logger.info(
+                LogCategory.AGENT,
+                "Scheduler started for social media post generation"
+            )
+
+        except Exception as e:
+            self.vault_logger.error(
+                LogCategory.AGENT,
+                f"Failed to setup scheduler: {e}",
+                error_type=type(e).__name__,
+                stack_trace=str(e),
+            )
+
+    def _generate_social_post(self) -> None:
+        """Generate social media post (scheduled task)."""
+        try:
+            if not self.social_drafter:
+                return
+
+            self.vault_logger.info(
+                LogCategory.AGENT,
+                "Generating scheduled social media post"
+            )
+
+            # Generate posts for different platforms
+            platforms = ['linkedin', 'twitter', 'facebook']
+
+            for platform in platforms:
+                try:
+                    self.social_drafter.draft_post(
+                        platform=platform,
+                        content_type='update',
+                    )
+                    self.vault_logger.info(
+                        LogCategory.AGENT,
+                        f"Generated social post for {platform}"
+                    )
+                except Exception as e:
+                    self.vault_logger.error(
+                        LogCategory.AGENT,
+                        f"Failed to generate post for {platform}: {e}",
+                        error_type=type(e).__name__,
+                        stack_trace=str(e),
+                    )
+
+        except Exception as e:
+            self.vault_logger.error(
+                LogCategory.AGENT,
+                f"Failed to generate social posts: {e}",
+                error_type=type(e).__name__,
+                stack_trace=str(e),
+            )
 
 
 def main():

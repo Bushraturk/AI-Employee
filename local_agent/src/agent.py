@@ -35,6 +35,11 @@ from shared.utils.logger import VaultLogger, LogCategory
 from shared.sync_manager import SyncManager
 
 from local_agent.src.executors.email_executor import EmailExecutor
+from local_agent.src.executors.social_executor import SocialExecutor
+from local_agent.src.executors.whatsapp_executor import WhatsAppExecutor
+from local_agent.src.executors.accounting_executor import AccountingExecutor
+from local_agent.src.watchers.whatsapp_watcher import WhatsAppWatcher
+from local_agent.src.watchers.finance_watcher import FinanceWatcher
 from local_agent.src.approval_handler import ApprovalHandler
 from local_agent.src.dashboard_updater import DashboardUpdater
 from local_agent.src.config import LocalAgentConfig
@@ -79,8 +84,15 @@ class LocalAgent(BaseAgent):
             vault_logger=self.vault_logger,
         )
 
+        # Watchers
+        self.whatsapp_watcher: Optional[WhatsAppWatcher] = None
+        self.finance_watcher: Optional[FinanceWatcher] = None
+
         # Initialize executors
         self.email_executor: Optional[EmailExecutor] = None
+        self.social_executor: Optional[SocialExecutor] = None
+        self.whatsapp_executor: Optional[WhatsAppExecutor] = None
+        self.accounting_executor: Optional[AccountingExecutor] = None
 
         # Initialize approval handler
         self.approval_handler: Optional[ApprovalHandler] = None
@@ -112,12 +124,45 @@ class LocalAgent(BaseAgent):
             dry_run=self.dry_run,
         )
 
+        # Initialize social executor
+        self.social_executor = SocialExecutor(
+            agent_id=self.agent_id,
+            vault_manager=self.vault_manager,
+            vault_logger=self.vault_logger,
+            mcp_client=None,  # TODO: Initialize MCP client
+            dev_mode=self.dev_mode,
+            dry_run=self.dry_run,
+        )
+
+        # Initialize WhatsApp executor
+        self.whatsapp_executor = WhatsAppExecutor(
+            agent_id=self.agent_id,
+            vault_manager=self.vault_manager,
+            vault_logger=self.vault_logger,
+            session_path=self.config.whatsapp_session_path or "whatsapp_session/",
+            dev_mode=self.dev_mode,
+            dry_run=self.dry_run,
+        )
+
+        # Initialize WhatsApp watcher if enabled
+        if self.config.whatsapp_enabled:
+            self.whatsapp_watcher = WhatsAppWatcher(
+                agent_id=self.agent_id,
+                vault_manager=self.vault_manager,
+                vault_logger=self.vault_logger,
+                session_path=self.config.whatsapp_session_path or "whatsapp_session/",
+                check_interval_seconds=self.config.whatsapp_check_interval,
+            )
+            self.whatsapp_watcher.start()
+            self.vault_logger.info(LogCategory.WATCHER, "WhatsApp watcher started")
+
         # Initialize approval handler
+        executors = [self.email_executor, self.social_executor, self.whatsapp_executor, self.accounting_executor]
         self.approval_handler = ApprovalHandler(
             agent_id=self.agent_id,
             vault_manager=self.vault_manager,
             vault_logger=self.vault_logger,
-            executors=[self.email_executor],
+            executors=executors,
         )
 
         # Initialize dashboard updater
@@ -137,6 +182,12 @@ class LocalAgent(BaseAgent):
         # Sync vault to get latest approvals from cloud agent
         self._sync_vault()
 
+        # Check watchers
+        if self.whatsapp_watcher:
+            self.whatsapp_watcher.check()
+        if self.finance_watcher:
+            self.finance_watcher.check()
+
         # Process approved actions
         self._process_approved_actions()
 
@@ -150,6 +201,16 @@ class LocalAgent(BaseAgent):
     def cleanup(self) -> None:
         """Cleanup local agent resources."""
         self.vault_logger.info(LogCategory.AGENT, "Cleaning up local agent")
+
+        # Stop watchers
+        if self.whatsapp_watcher:
+            self.whatsapp_watcher.stop()
+        if self.finance_watcher:
+            self.finance_watcher.stop()
+
+        # Cleanup executors
+        if self.whatsapp_executor:
+            self.whatsapp_executor.cleanup()
 
         # Final dashboard update
         if self.dashboard_updater:
